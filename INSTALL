@@ -1,5 +1,5 @@
-Installation instructions for UseModWiki 0.91
-Last updated: February 11, 2001
+Installation instructions for UseModWiki 0.92
+Last updated: April 21, 2001
 See the README file for more information.
 
 The upgrade instructions are now in the UPGRADE file.
@@ -27,7 +27,7 @@ instructions if you are installing under Microsoft Windows.
    (This is usually unnecessary.)
 
 5. Edit the "wiki.pl" file.  The configuration section starts around
-   line 48.  The main configuration variable is:
+   line 55.  The main configuration variable is:
 
    $DataDir     = "/tmp/mywikidb";     # Main page database
 
@@ -104,3 +104,6 @@ Likely Problems:
    set the FullUrl configuration variable.  A sample setting for this
    variable would be $FullUrl = "http://www.mysite.com/cgi-bin/mywiki.pl".
 
+5. If saving a page takes more than 20-30 seconds, it is possible that
+   there is a problem with the hostname lookup step.  Try setting the
+   $UseLookup configuration variable to 0.

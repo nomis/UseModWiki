@@ -1,5 +1,5 @@
 # == Configuration =======================================================
-# Original version from UseModWiki 0.91 (February 11, 2001)
+# Original version from UseModWiki 0.92 (April 21, 2001)
 
 $CookieName  = "Wiki";          # Name for this wiki (for multi-wiki sites)
 $SiteName    = "Wiki";          # Name of site (used for titles)
@@ -16,6 +16,16 @@ $FullUrl     = "";              # Set if the auto-detected URL is wrong
 $RedirType   = 1;               # 1 = CGI.pm, 2 = script, 3 = no redirect
 $AdminPass   = "";              # Set to non-blank to enable password(s)
 $EditPass    = "";              # Like AdminPass, but for editing only
+$StyleSheet  = "";              # URL for CSS stylesheet (like "/wiki.css")
+$NotFoundPg  = "";              # Page for not-found links ("" for blank pg)
+$EmailFrom   = "Wiki";          # Text for "From: " field of email notes.
+$SendMail    = "/usr/sbin/sendmail";  # Full path to sendmail executable
+$FooterNote  = "";              # HTML for bottom of every page
+$EditNote    = "";              # HTML notice above buttons on edit page
+$MaxPost     = 1024 * 210;      # Maximum 210K posts (about 200K for pages)
+$NewText     = "";              # New page text ("" for default message)
+$HttpCharset = "";              # Charset for pages, like "iso-8859-2"
+$UserGotoBar = "";              # HTML added to end of goto bar
 
 # Major options:
 $UseSubpage  = 1;       # 1 = use subpages,       0 = do not use subpages
@@ -27,6 +37,9 @@ $UseDiff     = 1;       # 1 = use diff features,  0 = do not use diff
 $FreeLinks   = 1;       # 1 = use [[word]] links, 0 = LinkPattern only
 $WikiLinks   = 1;       # 1 = use LinkPattern,    0 = use [[word]] only
 $AdminDelete = 1;       # 1 = Admin only page,    0 = Editor can delete pages
+$RunCGI      = 1;       # 1 = Run script as CGI,  0 = Load but do not run
+$EmailNotify = 0;       # 1 = use email notices,  0 = no email on changes
+$EmbedWiki   = 0;       # 1 = no headers/footers, 0 = normal wiki pages
 
 # Minor options:
 $LogoLeft    = 0;       # 1 = logo on left,       0 = logo on right
@@ -45,12 +58,9 @@ $UseIndex    = 0;       # 1 = use index file,     0 = slow/reliable method
 $UseHeadings = 1;       # 1 = allow = h1 text =,  0 = no header formatting
 $NetworkFile = 1;       # 1 = allow remote file:, 0 = no file:// links
 $BracketWiki = 0;       # 1 = [WikiLnk txt] link, 0 = no local descriptions
-
-$UseEmailNotify = 0;       # 1 = allow email notification,     0 = don't
-$NotifyDefault  = 0;       # Default for email notify checkbox on Edit page.
-$EmailFrom      = "Wiki";  # Text for "From: " field of email notes.
-                           # (But Reply-to; is set to same as To: anyway.)
-$SendMail       = "/usr/sbin/sendmail"; # Full path to sendmail executable
+$UseLookup   = 1;       # 1 = lookup host names,  0 = skip lookup (IP only)
+$FreeUpper   = 1;       # 1 = force upper case,   0 = do not force case
+$FastGlob    = 1;       # 1 = new faster code,    0 = old compatible code
 
 # HTML tag lists, enabled if $HtmlTags is set.
 # Scripting is currently possible with these tags,

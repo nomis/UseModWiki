@@ -1,13 +1,13 @@
-Upgrade instructions for UseModWiki 0.91
-Last updated: February 11, 2001
+Upgrade instructions for UseModWiki 0.92
+Last updated: April 21, 2001
 See the INSTALL file for new installations.
 
 Please email usemod@usemod.com with any questions, comments, or suggestions.
 
 ------
-Upgrading from 0.90:
+Upgrading from 0.90 or 0.91:
 
-1. Make a backup of your current wiki script and database directory
+1. Make a backup of your current wiki script and your database directory
    ($DataDir).
 
 2. Copy the wiki.pl file to your cgi-bin directory, overwriting your
@@ -34,15 +34,96 @@ more information.
 ------
 Upgrading from 0.86 or 0.88:
 
-Version 0.91 of UseModWiki uses a different internal database for
+Version 0.92 of UseModWiki uses a different internal database for
 storing page data.  It requires a conversion script (um9cvt.pl) to
-upgrade version 0.86 or 0.88 wikis to 0.91.
+upgrade version 0.86 or 0.88 wikis to 0.92.
 
 See http://www.usemod.com/cgi-bin/wiki.pl?UseModWiki/Upgrade for
 detailed upgrade instructions.
 
 ------
 New configuration settings:
+
+New settings as of 0.92:
+
+$StyleSheet  = "";              # URL for CSS stylesheet (like "/wiki.css")
+
+  The URL for an external CSS stylesheet.
+
+$NotFoundPg  = "";              # Page for not-found links ("" for blank pg)
+
+  If a page is not found by an ordinary link (like wiki.pl?SomePage), this
+option allows a special not-found page to be displayed rather than the
+usual blank "Describe this page here." message.  It is probably most useful
+for sites with more visitors than editors, or as a kind of "404" page in
+case wiki pages are deleted or renamed.
+
+$FooterNote  = "";              # HTML for bottom of every page
+
+  The contents of $FooterNote will be displayed at the bottom of every
+normal wiki page (some error messages will not display this message).  It is
+raw HTML, so make sure you escape special characters properly.
+
+$EditNote    = "";              # HTML Notice above buttons on edit page
+
+  This is like $FooterNote, but it is displayed on the editing page.  It is
+a good place for a brief policy note about contributed content.
+
+$MaxPost     = 1024 * 210;      # Maximum 210K posts (about 200K for pages)
+
+  The maximum accepted size of a POST (edit) request in bytes.  Page
+submissions beyond this size will not be accepted.  This may be useful to
+prevent simple denial-of-service attacks.
+
+$NewText     = "";              # New page text ("" for default message)
+
+  The text that is inserted into a newly-created page.  Leave this setting
+blank to keep the default message.
+
+$HttpCharset = "";              # Charset for pages, like "iso-8859-2"
+
+  If non-blank, this charset will be used in the HTTP header.  This may be
+most useful for non-English wikis.
+
+$UserGotoBar = "";              # HTML added to end of goto bar
+
+  If non-blank, this is added to the end of the goto/link bar on each page.
+
+$RunCGI      = 1;       # 1 = Run script as CGI,  0 = Load but do not run
+
+  For those who are using mod_perl, FastCGI, or similar persistent-CGI
+systems, set this variable to 0 *in the script* in order to prevent the
+script from running as soon as it is loaded.  See the PersistentCGI page on
+the UseMod wiki for more details.
+
+$UseLookup   = 1;       # 1 = lookup host names,  0 = skip lookup (IP only)
+
+  If saving a page takes a long time (20 or more seconds), try changing
+this setting to 0.
+
+$FreeUpper   = 1;       # 1 = force upper case,   0 = do not force case
+
+  The new 0.92 code by default forces all words in a page-title to start
+with an uppercase letter.  (A link like [[This is a link]] will go to
+a page named [[This Is A Link]].)  This convention allows similar links
+(differing only in case) to point to the same page.
+
+  Sites that use sentences as links might not want this behavior, so the
+$FreeUpper setting allows it to be disabled.  Note that the first letter
+of the first word is still *always* uppercased regardless of this setting.
+
+$FastGlob    = 1;       # 1 = new faster code,    0 = old compatible code
+
+  Thanks to user feedback the indexing code has been greatly improved.
+In case of problems, however, the old code is available.
+
+$EmbedWiki   = 0;       # 1 = no headers/footers, 0 = normal wiki pages
+
+  Normally this setting will be kept at 0.  If set to 1, only the wiki
+text of each page will be displayed (no headers, linkbars, footers, search
+forms, or logos are displayed).
+
+New settings as of 0.91:
 
 $HomePage    = "HomePage";      # Home page (change space to _)
 
@@ -107,3 +188,5 @@ like [any text here], pointing to WikiLink.  This occasionally caused
 problems with things like category lists like [CategoryAlpha CategoryBeta].
 This behavior is now optional, and is disabled by default.  If you want
 the 0.90 behavior of local described-links, change this setting to 1.
+
+==== end of UPGRADE document ====
