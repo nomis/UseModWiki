@@ -1,8 +1,6 @@
-Installation instructions for UseModWiki 0.92
-Last updated: April 21, 2001
-See the README file for more information.
-
-The upgrade instructions are now in the UPGRADE file.
+Installation instructions for UseModWiki 1.0
+Last updated: September 11, 2003
+See the UPGRADE file for instructions to upgrade an existing wiki.
 
 ------
 New Installations:
@@ -13,7 +11,7 @@ instructions if you are installing under Microsoft Windows.
 
 1. Copy the file "wiki.pl" to your cgi-bin directory.  You can rename
    the file to another name if you like.  (Some servers may require
-   the name to end in ".pl".)
+   the name to end in ".pl" or ".cgi".)
 
 2. For some servers, you may need to change the permissions on the wiki.pl
    script.  (The command "chmod 755 wiki.pl" should be correct.)
@@ -24,22 +22,24 @@ instructions if you are installing under Microsoft Windows.
 
 4. If your installation of Perl is not located in /usr/bin/perl, you will
    need to change the "/usr/bin/perl" text in the first line of wiki.pl.
-   (This is usually unnecessary.)
+   (On UNIX-like systems this is usually unnecessary.  For Windows,
+    "#!perl" (without the quotes) may also work.)
 
 5. Edit the "wiki.pl" file.  The configuration section starts around
-   line 55.  The main configuration variable is:
+   line 60.  The main configuration variable is:
 
    $DataDir     = "/tmp/mywikidb";     # Main page database
 
-   ... The wiki database directory.  The default directory is in /tmp,
-   which is not a good location for a long-term wiki.  (Many systems will
-   erase the contents of /tmp when they crash or reboot.)
-   Change this directory to the one you created in step 3.
+   ... which is the wiki database directory.  The default directory is
+   in /tmp, which is not a good location for a long-term wiki.  (Many
+   systems will erase the contents of /tmp when they crash or reboot.)
+   Change this directory to the one you created in step 3, using the
+   full path name, like "/home/domainname/www/wikidb".
 
-6. Starting with version 0.90 of UseModWiki, you can edit most of the
-   configuration variables outside the script.  (You still need to edit
-   the script to set the $DataDir variable.)  To do this, copy the "config"
-   file to your wiki's $DataDir directory and edit it.
+6. Most of the wiki's configuration variables can be stored and edited
+   outside the script.  (You still need to edit the script to set the
+   $DataDir variable.)  To do this, copy the "config" file to your wiki's
+   $DataDir directory and edit it.
 
    The advantage of editing the config file (rather than the script) is that
    upgrades to future versions are much easier--you only need to make the
@@ -68,15 +68,28 @@ instructions if you are installing under Microsoft Windows.
    ... This is the URL for the logo image.  If it is "", the logo will
    not be displayed.
 
-7. If you wish to use the provided wiki.gif image, copy it to the top
-   directory of your www pages.  (Or see step 3 to change the LogoUrl
+7. If you are installing the wiki on a web server using a non-standard
+   port number (like 8080), then you must also set $FullUrl to the
+   full path of your wiki, like:
+
+   $FullUrl = "http://www.mydomain.com:8080/cgi-bin/wiki.pl";
+
+   If you are using a non-standard port and do not set $FullUrl, then
+   the wiki may not go to the right URL after editing a page.
+
+   (If your site's URLs are like "http://www.mydomain.com/pagename"
+    (without a number like "8080"), then you should not need to
+    modify the $FullUrl setting.)
+
+8. If you wish to use the provided wiki.gif image, copy it to the top
+   directory of your www pages.  (Or see step 6 to change the LogoUrl
    variable.)
 
-8. (Optional) To use the supplied InterWiki site definitions, copy the
+9. (Optional) To use the supplied InterWiki site definitions, copy the
    file "intermap" into the database directory (from step 3).
 
-9. Start your web browser, and go to the URL of the wiki.pl script.
-   You should be able to edit and add new pages.
+10. Start your web browser, and go to the URL of the wiki.pl script.
+    You should be able to edit and add new pages.
 
 ------
 Likely Problems:

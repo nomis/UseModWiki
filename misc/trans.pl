@@ -1,4 +1,6 @@
 %Translate = split('\n',<<END_OF_TRANSLATION);
+Unknown Error (no error text)
+
 Could not create %s
 
 Showing revision %s
@@ -41,19 +43,21 @@ changes
 
 History of %s
 
+Compare
+
+(logged)
+
 Revision %s
 
-View
-
 Edit
-
-Diff
 
 by
 
 Preferences
 
 Random Page
+
+Upload
 
 ID %s
 
@@ -73,15 +77,23 @@ View other revisions
 
 View current revision
 
+Search MetaWiki
+
 Last edited
 
 Edited
+
+by %s
 
 Warning
 
 Database is stored in temporary directory %s
 
+Config file error:
+
 Search:
+
+Go!
 
 Your browser should go to the %s page.
 
@@ -95,9 +107,7 @@ Link to another page...
 
 Follow the %s link to continue.
 
-alternate
-
-search
+Local rule error:
 
 major diff
 
@@ -117,7 +127,11 @@ no other diffs
 
 No diff available.
 
-Difference (from revision %s to current revision)
+current revision
+
+revision %s
+
+Difference (from revision %1 to %2)
 
 No diff available--this is the first %s revision.
 
@@ -171,7 +185,7 @@ Editing not allowed: %s is read-only.
 
 Editing %s
 
-Editing revision %s of
+Editing revision %s of 
 
 Editing old revision %s.
 
@@ -291,6 +305,8 @@ Show link bar on top
 
 Add "Random Page" link to link bar
 
+StyleSheet URL:
+
 Saving Preferences
 
 Invalid UserID %s, preferences not saved.
@@ -323,6 +339,10 @@ User does not have administrative abilities.
 
 Local time:
 
+StyleSheet URL removed.
+
+StyleSheet setting saved.
+
 Preferences saved.
 
 Could not read from %s:
@@ -351,6 +371,8 @@ Could not get user-ID lock
 
 Search for: %s
 
+Backlinks for: %s
+
 %s pages found:
 
 Full Link List
@@ -359,11 +381,9 @@ Editing not allowed for %s.
 
 SampleUndefinedPage
 
-%s cannot be defined.
-
 Sample_Undefined_Page
 
-[[%s]] cannot be defined.
+%s cannot be defined.
 
 Could not get editing lock
 
@@ -379,6 +399,12 @@ Forced Unlock.
 
 can not write diff_log
 
+(done)
+
+(deleted)
+
+(replaced)
+
 Maintenance on all pages
 
 Maintenance not done.
@@ -389,7 +415,17 @@ Remove the "maintain" file or wait.
 
 Could not get maintain-lock
 
+Maintenance done at %s
+
 Processing rename/delete commands:
+
+Could not get lock for RC maintenance
+
+Maintaining RC log
+
+RC maintenance done.
+
+RC maintenance not done.
 
 This operation is restricted to site editors only...
 
@@ -408,5 +444,71 @@ Missing page id to lock/unlock...
 Lock for %s created.
 
 Lock for %s removed.
+
+UpdateLinksList could not get main lock
+
+Updating Links
+
+Administration
+
+Unlock page
+
+Lock page
+
+Delete this page
+
+Edit Banned List
+
+Run Maintenance
+
+Edit/Rename pages
+
+Unlock site
+
+Lock site
+
+Confirm Delete %s
+
+Confirm deletion of %s by following this link:
+
+Confirm Delete
+
+Delete %s
+
+%s can not be deleted.
+
+%s can not be deleted because it is locked.
+
+%s has been deleted.
+
+File Upload Page
+
+The current upload size limit is %s.
+
+Change the %s variable to increase this limit.
+
+Upload Finished
+
+The wiki link to your file is:
+
+Could not open file %s
+
+Convert wiki DB
+
+You must change the %s option before converting the wiki DB.
+
+Wiki DB locked for conversion.
+
+Converting Wiki DB...
+
+Finished converting wiki DB.
+
+Remove file %s to unlock wiki for editing.
+
+Trim wiki users
+
+Removed %s files.
+
+Recommended $StartUID setting is %s.
 
 END_OF_TRANSLATION

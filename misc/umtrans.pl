@@ -38,9 +38,9 @@ sub trans {
 print '%Translate = split(\'\n\',<<END_OF_TRANSLATION);' . "\n";
 foreach (<>) {
   s/T\(\'([^']+)/&trans($1)/ge;
-  s/Ts\(\'([^']+)/&trans($1)/ge;
+  s/Tss?\(\'([^']+)/&trans($1)/ge;
   s/T\(\"([^"]+)/&trans($1)/ge;
-  s/Ts\(\"([^"]+)/&trans($1)/ge;
+  s/Tss?\(\"([^"]+)/&trans($1)/ge;
 }
 
 print "END_OF_TRANSLATION\n";
