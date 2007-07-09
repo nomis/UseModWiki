@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# UseModWiki version 1.0 (September 12, 2003)
+# UseModWiki version 1.0.1 (July 9, 2007)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # Based on the GPLed AtisWiki 0.3  (C) 1998 Markus Denker
@@ -149,7 +149,7 @@ $UseAmPm      = 1;      # 1 = use am/pm in times, 0 = use 24-hour times
 $UseIndex     = 0;      # 1 = use index file,     0 = slow/reliable method
 $UseHeadings  = 1;      # 1 = allow = h1 text =,  0 = no header formatting
 $NetworkFile  = 1;      # 1 = allow remote file:, 0 = no file:// links
-$BracketWiki  = 0;	# 1 = [WikiLnk txt] link, 0 = no local descriptions
+$BracketWiki  = 0;      # 1 = [WikiLnk txt] link, 0 = no local descriptions
 $UseLookup    = 1;      # 1 = lookup host names,  0 = skip lookup (IP only)
 $FreeUpper    = 1;      # 1 = force upper case,   0 = do not force case
 $FastGlob     = 1;      # 1 = new faster code,    0 = old compatible code
@@ -374,18 +374,23 @@ sub T {
 }
 
 sub Ts {
-  my ($text, $string) = @_;
+  my ($text, $string, $noquote) = @_;
 
+  $string = &QuoteHtml($string) unless $noquote;
   $text = T($text);
   $text =~ s/\%s/$string/;
   return $text;
 }
 
 sub Tss {
-  my $text = @_[0];
+  my $text = $_[0];
+  my @args = @_;
 
+  @args = map {
+    $_ = &QuoteHtml($_);
+  } @args;
   $text = T($text);
-  $text =~ s/\%([1-9])/$_[$1]/ge;
+  $text =~ s/\%([1-9])/$args[$1]/ge;
   return $text;
 }
 
@@ -993,11 +998,11 @@ sub DoHistory {
   $canEdit = &UserCanEdit($id)  if ($HistoryEdit);
   if ($UseDiff) {
     print <<EOF ;
-      <form action='$ScriptName' METHOD='GET'>
-          <input type='hidden' name='action' value='browse'/>
-          <input type='hidden' name='diff' value='1'/>
-          <input type='hidden' name='id' value='$id'/>
-      <table border='0' width='100%'><tr>
+      <form action="$ScriptName" METHOD="GET">
+          <input type="hidden" name="action" value="browse"/>
+          <input type="hidden" name="diff" value="1"/>
+          <input type="hidden" name="id" value="$id"/>
+      <table border="0" width="100%"><tr>
 EOF
   }
   $html = &GetHistoryLine($id, $Page{'text_default'}, $canEdit, $row++);
@@ -1093,14 +1098,15 @@ sub ScriptLinkChar {
 sub ScriptLink {
   my ($action, $text) = @_;
 
-  return "<a href=\"$ScriptName" . &ScriptLinkChar() . "$action\">$text</a>";
+  return '<a href="' . $ScriptName . &ScriptLinkChar() . &UriEscape($action)
+         . "\">$text</a>";
 }
 
 sub ScriptLinkClass {
   my ($action, $text, $class) = @_;
 
-  return "<a href=\"$ScriptName" . &ScriptLinkChar() . "$action\""
-         . ' class=' . $class . ">$text</a>";
+  return '<a href="' . $ScriptName . &ScriptLinkChar() . &UriEscape($action)
+         . '" class="' . $class . "\">$text</a>";
 }
 
 sub GetPageLinkText {
@@ -1245,8 +1251,8 @@ sub ScriptLinkTitle {
   if ($FreeLinks) {
     $action =~ s/ /_/g;
   }
-  return "<a href=\"$ScriptName" . &ScriptLinkChar()
-         . "$action\" title=\"$title\">$text</a>";
+  return '<a href="' . $ScriptName . &ScriptLinkChar() . &UriEscape($action)
+         . "\" title=\"$title\">$text</a>";
 }
 
 sub GetAuthorLink {
@@ -1297,7 +1303,7 @@ sub GetHeader {
   $result .= '<div class=wikiheader>';
   if ($oldId ne '') {
     $result .= $q->h3('(' . Ts('redirected from %s', 
-                               &GetEditLink($oldId, $oldId)) . ')');
+                               &GetEditLink($oldId, $oldId), 1) . ')');
   }
   if ((!$embed) && ($LogoUrl ne "")) {
     $logoImage = "img src=\"$LogoUrl\" alt=\"$altText\" border=0";
@@ -1406,7 +1412,7 @@ sub GetFooterText {
     $result .= &GetPageLinkText($id, T('View current revision'));
   }
   if ($UseMetaWiki) {
-    $result .= ' | <a href="http://sunir.org/apps/meta.pl?' . $id . '">'
+    $result .= ' | <a href="http://sunir.org/apps/meta.pl?' . &UriEscape($id) . '">'
                . T('Search MetaWiki') . '</a>';
   }
   if ($Section{'revision'} > 0) {
@@ -1419,7 +1425,7 @@ sub GetFooterText {
     $result .= ' ' . &TimeToText($Section{ts});
     if ($AuthorFooter) {
       $result .= ' ' . Ts('by %s', &GetAuthorLink($Section{'host'},
-                                     $Section{'username'}, $Section{'id'}));
+                                     $Section{'username'}, $Section{'id'}), 1);
     }
   }
   if ($UseDiff) {
@@ -1513,7 +1519,7 @@ sub GetRedirectPage {
 
   # Normally get URL from script, but allow override.
   $FullUrl = $q->url(-full=>1)  if ($FullUrl eq "");
-  $url = $FullUrl . &ScriptLinkChar() . $newid;
+  $url = $FullUrl . &ScriptLinkChar() . &UriEscape($newid);
   $nameLink = "<a href=\"$url\">$name</a>";
   if ($RedirType < 3) {
     if ($RedirType == 1) {             # Use CGI.pm
@@ -1782,6 +1788,13 @@ sub EvalLocalRules {
   return $text;
 }
  
+sub UriEscape {
+  my ($uri) = @_;
+  $uri =~ s/([\x00-\x1f\x7f-\xff])/sprintf("%%%02X", ord($1))/ge;
+  $uri =~ s/\&/\&amp;/g;
+  return $uri;
+}
+
 sub QuoteHtml {
   my ($html) = @_;
 
@@ -2599,7 +2612,7 @@ sub UserDataFilename {
 sub ReportError {
   my ($errmsg) = @_;
 
-  print $q->header, "<H2>", $errmsg, "</H2>", $q->end_html;
+  print $q->header, $q->start_html, "<H2>", &QuoteHtml($errmsg), "</H2>", $q->end_html;
 }
 
 sub ValidId {
@@ -3276,7 +3289,7 @@ sub DoEdit {
     print ' (', T('Your user name is'), ' ',
           &GetPageLink($userName) . ') ';
   } else {
-    print ' (', Ts('Visit %s to set your user name.', &GetPrefsLink()), ') ';
+    print ' (', Ts('Visit %s to set your user name.', &GetPrefsLink(), 1), ') ';
   }
   print $q->submit(-name=>'Preview', -value=>T('Preview')), "\n";
   if ($isConflict) {
@@ -3303,8 +3316,8 @@ sub DoEdit {
   print '<div class=wikifooter>';
   print &GetHistoryLink($id, T('View other revisions')) . "<br>\n";
   print &GetGotoBar($id);
-  print $q->endform;
   print '</div>';
+  print $q->endform;
   print &GetMinimumFooter();
 }
 
@@ -3403,11 +3416,11 @@ sub DoEditPrefs {
   print '<br>' . T('StyleSheet URL:') . ' ',
         &GetFormText('stylesheet', "", 30, 150);
   print '<br>', $q->submit(-name=>'Save', -value=>T('Save')), "\n";
+  print $q->endform;
   print '</div>';
   print "<hr class=wikilinefooter>\n";
   print '<div class=wikifooter>';
   print &GetGotoBar('');
-  print $q->endform;
   print '</div>';
   print &GetMinimumFooter();
 }
@@ -3896,6 +3909,9 @@ sub DoPost {
   my $editTime = $Now;
   my $authorAddr = $ENV{REMOTE_ADDR};
 
+  if ($FreeLinks) {
+    $id = &FreeToNormal($id);
+  }
   if (!&UserCanEdit($id, 1)) {
     # This is an internal interface--we don't need to explain
     &ReportError(Ts('Editing not allowed for %s.', $id));
@@ -4070,7 +4086,7 @@ sub EmailNotify {
     $address =~ s/\n//g;
     close(EMAIL);
     my $home_url = $q->url();
-    my $page_url = $home_url . "?$id";
+    my $page_url = $home_url . &ScriptLinkChar() . &UriEscape($id);
     my $editors_summary = $q->param("summary");
     if (($editors_summary eq "*") or ($editors_summary eq "")){
       $editors_summary = "";
@@ -4828,7 +4844,7 @@ sub RenamePage {
 
 sub DoShowVersion {
   print &GetHeader("", "Displaying Wiki Version", "");
-  print "<p>UseModWiki version 1.0</p>\n";
+  print "<p>UseModWiki version 1.0.1</p>\n";
   print &GetCommonFooter();
 }
 
@@ -4930,6 +4946,7 @@ sub SaveUpload {
   $filename =~ s/.*[\/\\](.*)/$1/;  # Only name after last \ or /
   $uploadFilehandle = $q->upload('file');
   open UPLOADFILE, ">$UploadDir$filename";
+  binmode UPLOADFILE;
   while (<$uploadFilehandle>) { print UPLOADFILE; }
   close UPLOADFILE;
   print T('The wiki link to your file is:') . "\n<br><BR>";
