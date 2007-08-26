@@ -1,0 +1,43 @@
+
+Changes for bugfix release 1.0.2 (August 26, 2007):
+
+* added CREDITS and Changelog (forgot them in 1.0.1)
+* make .zip distribution for Windows users again (forgot it for 1.0.1)
+* fixed range in SplitUrlPunct()
+* fixed bug ActionEqIndexAndEmbedEqOne
+  same problem with other actions and parameter embed
+* moved CSS class wikilinefooter (for <hr>) inside class wikifooter
+* fixed bug ClassWikifooterMissing
+* fixed bug VariableParseParasYieldsOddOutput
+  fix contributed by Trent, simplified
+* fixed bug UploadTranslation
+  fix contributed by UngarPeter
+* added patch RobotsNoFollow version D
+  contributed by Trent with suggestion by UngarPeter
+  based on work by TomScanlan
+* fixed bug ActionLinksExistsZeroSubPage aka RequestedLinks
+  based on fix by GyPark and MikeCastle
+* fixed bug ImageExtensionsCaseSensitive aka
+  UppercaseImageUploadCausesProblemsWithDisplay
+* added ico/tif/tiff to ImageExtensions
+* fixed bug CamelCaseImageUploadCausesProblemsWithDisplay
+  with suggestion from DavidClaughton
+
+Changes for bugfix release 1.0.1 (July 9, 2007):
+
+* SECURITY: fix cross-site scripting vulnerability (CVE-2004-1397)
+  fix contributed by Christoph Berg (cb@df7cb.de)
+* fixed bug PossibleToCreatePagesThatCanNotBeEdited
+  fix contributed by RichardP
+* fixed bug FileUploadManglesFile aka Win32BinaryUpload aka
+  UploadOnWindowsNeedsBinmode
+  fix contributed by Robin Rowe (rower@movieeditor.com) and DavidWall
+* fixed bug CompareButtonFailsToDiff aka DoHistory's_Form
+  fix contributed by BrianHunter and ??
+* fixed bug BadHtml
+* fixed bug AmpersandBug
+  fix contributed by UngarPeter
+
+If I've forgotten something or someone, please leave a note on
+UseMod:MarkusLude or send mail to usemod@usemod.com.
+

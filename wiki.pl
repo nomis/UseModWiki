@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# UseModWiki version 1.0.1 (July 9, 2007)
+# UseModWiki version 1.0.2 (August 26, 2007)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # Based on the GPLed AtisWiki 0.3  (C) 1998 Markus Denker
@@ -317,7 +317,7 @@ sub InitLinkPatterns {
                   . "prospero|telnet|gopher";
   $UrlProtocols .= '|file'  if ($NetworkFile || !$LimitFileUrl);
   $UrlPattern = "((?:(?:$UrlProtocols):[^\\]\\s\"<>$FS]+)$QDelim)";
-  $ImageExtensions = "(gif|jpg|png|bmp|jpeg)";
+  $ImageExtensions = "(gif|jpg|png|bmp|jpeg|ico|tiff?)";
   $RFCPattern = "RFC\\s?(\\d+)";
   $ISBNPattern = "ISBN:?([0-9- xX]{10,})";
   $UploadPattern = "upload:([^\\]\\s\"<>$FS]+)$QDelim";
@@ -576,15 +576,12 @@ sub BrowsePage {
   $fullHtml .= '<div class=wikitext>';
   $fullHtml .= &WikiToHTML($Text{'text'});
   $fullHtml .= '</div>';
-  if (!&GetParam('embed', $EmbedWiki)) {
-    $fullHtml .= "<hr class=wikilinefooter>\n";
-  }
   if (($id eq $RCName) || (T($RCName) eq $id) || (T($id) eq $RCName)) {
     print $fullHtml;
+    print "<hr class=wikilinerc>\n";
     print '<div class=wikirc>';
     &DoRc(1);
     print '</div>';
-    print "<hr class=wikilinefooter>\n"  if (!&GetParam('embed', $EmbedWiki));
     print &GetFooterText($id, $goodRevision);
     return;
   }
@@ -1364,6 +1361,11 @@ sub GetHtmlHeader {
       $keywords =~ s/([a-z])([A-Z])/$1, $2/g;
       $html .= "<META NAME='KEYWORDS' CONTENT='$keywords'/>\n" if $keywords;
   }
+  # we don't want robots indexing our history or other admin pages
+  my $action = lc(&GetParam('action', ''));
+  unless (!$action or $action eq "rc" or $action eq "index") {
+    $html .= "<META NAME='robots' CONTENT='noindex,nofollow'>\n";
+  }
   if ($SiteBase ne "") {
     $html .= qq(<BASE HREF="$SiteBase">\n);
   }
@@ -1393,6 +1395,7 @@ sub GetFooterText {
     return $q->end_html;
   }
   $result = '<div class=wikifooter>';
+  $result .= "<hr class=wikilinefooter>\n";
   $result .= &GetFormStart();
   $result .= &GetGotoBar($id);
   if (&UserCanEdit($id, 0)) {
@@ -1456,7 +1459,7 @@ sub GetFooterText {
 sub GetCommonFooter {
   my ($html);
 
-  $html = '<hr class=wikilinefooter>' . '<div class=wikifooter>'
+  $html = '<div class=wikifooter>' . '<hr class=wikilinefooter>'
           . &GetFormStart() . &GetGotoBar('')
           . &GetSearchForm() . $q->endform;
   if ($FooterNote ne '') {
@@ -1587,7 +1590,7 @@ sub WikiToHTML {
         s/\&lt;pre\&gt;((.|\n)*?)\&lt;\/pre\&gt;/&StorePre($1, "pre")/ige;
     $pageText =~
         s/\&lt;code\&gt;((.|\n)*?)\&lt;\/code\&gt;/&StorePre($1, "code")/ige;
-    $pageText =~ s/((.|\n)+?\n)\s*\n/&ParseParagraph($1)/geo;
+    $pageText =~ s/((.|\n)+?\n)\s*(\n|$)/&ParseParagraph($1)/geo;
     $pageText =~ s/(.*)<\/p>(.+)$/$1.&ParseParagraph($2)/seo;
   } else {
     $pageText = &CommonMarkup($pageText, 1, 0);   # Multi-line markup
@@ -1658,6 +1661,9 @@ sub CommonMarkup {
     s/\[$InterLinkPattern\]/&StoreBracketInterPage($1, "", 0)/geo;
     s/\b$UrlPattern/&StoreUrl($1, $useImage)/geo;
     s/\b$InterLinkPattern/&StoreInterPage($1, $useImage)/geo;
+    if ($UseUpload) {
+      s/$UploadPattern/&StoreUpload($1)/geo;
+    }
     if ($WikiLinks) {
       s/$AnchoredLinkPattern/&StoreRaw(&GetPageOrEditAnchoredLink($1,
                              $2, ""))/geo if $NamedAnchors;
@@ -1667,9 +1673,6 @@ sub CommonMarkup {
     }
     s/\b$RFCPattern/&StoreRFC($1)/geo;
     s/\b$ISBNPattern/&StoreISBN($1)/geo;
-    if ($UseUpload) {
-      s/$UploadPattern/&StoreUpload($1)/geo;
-    }
     if ($ThinLine) {
       if ($OldThinLine) {  # Backwards compatible, conflicts with headers
         s/====+/<hr noshade class=wikiline size=2>/g;
@@ -1954,7 +1957,7 @@ sub ImageAllowed {
 
   $imagePrefixes = 'http:|https:|ftp:';
   $imagePrefixes .= '|file:'  if (!$LimitFileUrl);
-  return 0  unless ($url =~ /^($imagePrefixes).+\.$ImageExtensions$/);
+  return 0  unless ($url =~ /^($imagePrefixes).+\.$ImageExtensions$/i);
   return 0  if ($url =~ /"/);      # No HTML-breaking quotes allowed
   return 1  if (@ImageSites < 1);  # Most common case: () means all allowed
   return 0  if ($ImageSites[0] eq 'none');  # Special case: none allowed
@@ -2089,7 +2092,7 @@ sub SplitUrlPunct {
   $punct = "";
   if ($NewFS) {
     ($punct) = ($url =~ /([^a-zA-Z0-9\/\x80-\xff]+)$/);
-    $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
+    $url =~ s/([^a-zA-Z0-9\/\x80-\xff]+)$//;
   } else {
     ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
     $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
@@ -3298,9 +3301,9 @@ sub DoEdit {
           &GetTextArea('newtext', $newText, $editRows, $editCols),
           "<p>\n";
   }
-  print "<hr class=wikilinefooter>\n";
   if ($preview) {
     print '<div class=wikipreview>';
+    print "<hr class=wikilinepreview>\n";
     print "<h2>", T('Preview:'), "</h2>\n";
     if ($isConflict) {
       print "<b>",
@@ -3309,15 +3312,18 @@ sub DoEdit {
     }
     $MainPage = $id;
     $MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
-    print &WikiToHTML($oldText) . "<hr class=wikilinefooter>\n";
+    print &WikiToHTML($oldText) . "<hr class=wikilinepreview>\n";
     print "<h2>", T('Preview only, not yet saved'), "</h2>\n";
     print '</div>';
   }
-  print '<div class=wikifooter>';
-  print &GetHistoryLink($id, T('View other revisions')) . "<br>\n";
-  print &GetGotoBar($id);
-  print '</div>';
   print $q->endform;
+  if (!&GetParam('embed', $EmbedWiki)) {
+    print '<div class=wikifooter>';
+    print "<hr class=wikilinefooter>\n";
+    print &GetHistoryLink($id, T('View other revisions')) . "<br>\n";
+    print &GetGotoBar($id);
+    print '</div>';
+  }
   print &GetMinimumFooter();
 }
 
@@ -3418,10 +3424,12 @@ sub DoEditPrefs {
   print '<br>', $q->submit(-name=>'Save', -value=>T('Save')), "\n";
   print $q->endform;
   print '</div>';
-  print "<hr class=wikilinefooter>\n";
-  print '<div class=wikifooter>';
-  print &GetGotoBar('');
-  print '</div>';
+  if (!&GetParam('embed', $EmbedWiki)) {
+    print '<div class=wikifooter>';
+    print "<hr class=wikilinefooter>\n";
+    print &GetGotoBar('');
+    print '</div>';
+  }
   print &GetMinimumFooter();
 }
 
@@ -3640,9 +3648,13 @@ sub DoEnterLogin {
         $q->password_field(-name=>'p_password', -value=>'', 
                            -size=>15, -maxlength=>50);
   print '<br>', $q->submit(-name=>'Login', -value=>T('Login')), "\n";
-  print "<hr class=wikilinefooter>\n";
-  print &GetGotoBar('');
   print $q->endform;
+  if (!&GetParam('embed', $EmbedWiki)) {
+    print '<div class=wikifooter>';
+    print "<hr class=wikilinefooter>\n";
+    print &GetGotoBar('');
+    print '</div>';
+  }
   print &GetMinimumFooter();
 }
 
@@ -3672,9 +3684,12 @@ sub DoLogin {
   } else {
     print Ts('Login for user ID %s failed.', $uid);
   }
-  print "<hr class=wikilinefooter>\n";
-  print &GetGotoBar('');
-  print $q->endform;
+  if (!&GetParam('embed', $EmbedWiki)) {
+    print '<div class=wikifooter>';
+    print "<hr class=wikilinefooter>\n";
+    print &GetGotoBar('');
+    print '</div>';
+  }
   print &GetMinimumFooter();
 }
 
@@ -3808,7 +3823,7 @@ sub PrintLinkList {
 sub GetFullLinkList {
   my ($name, $unique, $sort, $exists, $empty, $link, $search);
   my ($pagelink, $interlink, $urllink);
-  my (@found, @links, @newlinks, @pglist, %pgExists, %seen);
+  my (@found, @links, @newlinks, @pglist, %pgExists, %seen, $main);
 
   $unique = &GetParam("unique", 1);
   $sort = &GetParam("sort", 1);
@@ -3833,7 +3848,14 @@ sub GetFullLinkList {
       %seen = ();
     }
     @links = &GetPageLinks($name, $pagelink, $interlink, $urllink);
+    if ($UseSubpage) {
+      $main = $name;
+      $main =~ s/\/.*//;
+    }
     foreach $link (@links) {
+      if ($UseSubpage && ($link =~ /^\//)) {
+        $link = $main . $link;
+      }
       $seen{$link}++;
       if (($unique > 0) && ($seen{$link} != 1)) {
         next;
@@ -4435,9 +4457,13 @@ sub DoEditBanned {
         "^123\\.21\\.3\\.\\d+\$<p>";
   print &GetTextArea('banlist', $banList, 12, 50);
   print "<br>", $q->submit(-name=>'Save'), "\n";
-  print "<hr class=wikilinefooter>\n";
-  print &GetGotoBar("");
   print $q->endform;
+  if (!&GetParam('embed', $EmbedWiki)) {
+    print '<div class=wikifooter>';
+    print "<hr class=wikilinefooter>\n";
+    print &GetGotoBar('');
+    print '</div>';
+  }
   print &GetMinimumFooter();
 }
 
@@ -4487,9 +4513,13 @@ sub DoEditLinks {
   print $q->checkbox(-name=>"p_changetext", -override=>1, -checked=>1,
                       -label=>"Substitute text for rename");
   print "<br>", $q->submit(-name=>'Edit'), "\n";
-  print "<hr class=wikilinefooter>\n";
-  print &GetGotoBar("");
   print $q->endform;
+  if (!&GetParam('embed', $EmbedWiki)) {
+    print '<div class=wikifooter>';
+    print "<hr class=wikilinefooter>\n";
+    print &GetGotoBar('');
+    print '</div>';
+  }
   print &GetMinimumFooter();
 }
 
@@ -4844,7 +4874,7 @@ sub RenamePage {
 
 sub DoShowVersion {
   print &GetHeader("", "Displaying Wiki Version", "");
-  print "<p>UseModWiki version 1.0.1</p>\n";
+  print "<p>UseModWiki version 1.0.2</p>\n";
   print &GetCommonFooter();
 }
 
@@ -4927,8 +4957,8 @@ sub DoUpload {
   print '<FORM METHOD="post" ACTION="' . $ScriptName
         . '" ENCTYPE="multipart/form-data">';
   print '<input type="hidden" name="upload" value="1" />';
-  print 'File to Upload: <INPUT TYPE="file" NAME="file"><br><BR>';
-  print '<INPUT TYPE="submit" NAME="Submit" VALUE="Upload">';
+  print T('File to Upload:'), ' <INPUT TYPE="file" NAME="file"><br><BR>';
+  print '<INPUT TYPE="submit" NAME="Submit" VALUE="', T('Upload'), '">';
   print '</FORM>';
   print &GetCommonFooter(); 
 }
@@ -4953,7 +4983,7 @@ sub SaveUpload {
   $printFilename = $filename;
   $printFilename =~ s/ /\%20/g;  # Replace spaces with escaped spaces
   print "upload:" . $printFilename . "<BR><BR>\n";
-  if ($filename =~ /${ImageExtensions}$/) {
+  if ($filename =~ /$ImageExtensions$/i) {
     print '<HR><img src="' . $UploadUrl . $filename . '">' . "\n";
   }
   print &GetCommonFooter();
