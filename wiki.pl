@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# UseModWiki version 1.0.2 (August 26, 2007)
+# UseModWiki version 1.0.3 (September 12, 2007)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # Based on the GPLed AtisWiki 0.3  (C) 1998 Markus Denker
@@ -684,7 +684,7 @@ sub DoRc {
 
   $idOnly = &GetParam("rcidonly", "");
   if ($idOnly && $showHTML) {
-    print '<b>(' . Ts('for %s only', &ScriptLink($idOnly, $idOnly))
+    print '<b>(' . Ts('for %s only', &ScriptLink($idOnly, &QuoteHtml($idOnly)), 1)
           . ')</b><br>';
   }
   if ($showHTML) {
@@ -921,12 +921,13 @@ RSS
 sub GetRssRcLine{
   my ($pagename, $timestamp, $host, $userName, $userID, $summary,
       $isEdit, $pagecount, $revision, $diffPrefix, $historyPrefix) = @_;
-  my ($itemID, $description, $authorLink, $author, $status,
+  my ($pagenameEsc, $itemID, $description, $authorLink, $author, $status,
       $importance, $date, $item, $headItem);
 
+  $pagenameEsc = CGI::escape($pagename);
   # Add to list of items in the <channel/>
   $itemID = $FullUrl . &ScriptLinkChar()
-            . &GetOldPageParameters('browse', $pagename, $revision);
+            . &GetOldPageParameters('browse', $pagenameEsc, $revision);
   $itemID = &QuoteHtml($itemID);
   $headItem = "                <rdf:li rdf:resource=\"$itemID\"/>\n";
   # Add to list of items proper.
@@ -952,7 +953,7 @@ sub GetRssRcLine{
   $item = <<RSS ;
     <item rdf:about="$itemID">
         <title>$pagename</title>
-        <link>$QuotedFullUrl?$pagename</link>
+        <link>$QuotedFullUrl?$pagenameEsc</link>
         <description>$description</description>
         <dc:date>$date</dc:date>
         <dc:contributor>
@@ -962,9 +963,9 @@ sub GetRssRcLine{
         </dc:contributor>
         <wiki:status>$status</wiki:status>
         <wiki:importance>$importance</wiki:importance>
-        <wiki:diff>$diffPrefix$pagename</wiki:diff>
+        <wiki:diff>$diffPrefix$pagenameEsc</wiki:diff>
         <wiki:version>$revision</wiki:version>
-        <wiki:history>$historyPrefix$pagename</wiki:history>
+        <wiki:history>$historyPrefix$pagenameEsc</wiki:history>
     </item>
 RSS
   return ($headItem, $item);
@@ -1300,7 +1301,7 @@ sub GetHeader {
   $result .= '<div class=wikiheader>';
   if ($oldId ne '') {
     $result .= $q->h3('(' . Ts('redirected from %s', 
-                               &GetEditLink($oldId, $oldId), 1) . ')');
+                               &GetEditLink($oldId, &QuoteHtml($oldId)), 1) . ')');
   }
   if ((!$embed) && ($LogoUrl ne "")) {
     $logoImage = "img src=\"$LogoUrl\" alt=\"$altText\" border=0";
@@ -1699,6 +1700,15 @@ sub CommonMarkup {
   return $_;
 }
 
+sub EmptyCellsToNbsp {
+  my ($row) = @_;
+
+  $row =~ s/(?<=\|\|)\s+(?=\|\|)/&nbsp;/g;
+  $row =~ s/^\s+(?=\|\|)/&nbsp;/;
+  $row =~ s/(?<=\|\|)\s+$/&nbsp;/;
+  return $row;
+}
+
 sub WikiLinesToHtml {
   my ($pageText) = @_;
   my ($pageHtml, @htmlStack, $code, $codeAttributes, $depth, $oldCode);
@@ -1726,7 +1736,7 @@ sub WikiLinesToHtml {
     } elsif ($TableSyntax &&
              s/^((\|\|)+)(.*)\|\|\s*$/"<TR VALIGN='CENTER' "
                                       . "ALIGN='CENTER'><TD colspan='"
-                               . (length($1)\/2) . "'>$3<\/TD><\/TR>\n"/e) {
+                               . (length($1)\/2) . "'>" . EmptyCellsToNbsp($3) . "<\/TD><\/TR>\n"/e) {
       $code = 'TABLE';
       $codeAttributes = "BORDER='1'";
       $TableMode = 1;
@@ -1972,6 +1982,9 @@ sub StoreBracketUrl {
 
   if ($text eq "") {
     $text = &GetBracketUrlIndex($url);
+  } elsif ($text =~ /^$InterLinkPattern$/) {
+    my @interlink = split(/:/, $text, 2);
+    $text = &GetSiteUrl($interlink[0]) . $interlink[1];
   }
   if ($BracketImg && $useImage && &ImageAllowed($text)) {
     $text = "<img src=\"$text\">";
@@ -3198,7 +3211,7 @@ sub DoEdit {
     $id = &FreeToNormal($id);  # Take care of users like Markus Lude :-)
   }
   if (!&UserCanEdit($id, 1)) {
-    print &GetHeader("", T('Editing Denied'), "");
+    print &GetHeader('', T('Editing Denied'), '');
     if (&UserIsBanned()) {
       print T('Editing not allowed: user, ip, or network is blocked.');
       print "<p>";
@@ -3346,7 +3359,7 @@ sub DoEditPrefs {
   $recentName = $RCName;
   $recentName =~ s/_/ /g;
   &DoNewLogin()  if ($UserID < 400);
-  print &GetHeader('', T('Editing Preferences'), "");
+  print &GetHeader('', T('Editing Preferences'), '');
   print '<div class=wikipref>';
   print &GetFormStart();
   print GetHiddenValue("edit_prefs", 1), "\n";
@@ -3455,7 +3468,7 @@ sub DoUpdatePrefs {
   # All link bar settings should be updated before printing the header
   &UpdatePrefCheckbox("toplinkbar");
   &UpdatePrefCheckbox("linkrandom");
-  print &GetHeader('',T('Saving Preferences'), '');
+  print &GetHeader('', T('Saving Preferences'), '');
   print '<br>';
   if ($UserID < 1001) {
     print '<b>',
@@ -4146,11 +4159,19 @@ sub SearchTitleAndBody {
     &OpenDefaultText();
     if (($Text{'text'} =~ /$string/i) || ($name =~ /$string/i)) {
       push(@found, $name);
-    } elsif ($FreeLinks && ($name =~ m/_/)) {
-      $freeName = $name;
-      $freeName =~ s/_/ /g;
-      if ($freeName =~ /$string/i) {
-        push(@found, $name);
+    } elsif ($FreeLinks) {
+      if ($name =~ m/_/) {
+        $freeName = $name;
+        $freeName =~ s/_/ /g;
+        if ($freeName =~ /$string/i) {
+          push(@found, $name);
+        }
+      } elsif ($string =~ m/ /) {
+        $freeName = $string;
+        $freeName =~ s/ /_/g;
+        if ($Text{'text'} =~ /$freeName/i) {
+          push(@found, $name);
+        }
       }
     }
   }
@@ -4437,7 +4458,7 @@ sub DoPageLock {
 sub DoEditBanned {
   my ($banList, $status);
 
-  print &GetHeader("", "Editing Banned list", "");
+  print &GetHeader('', T('Editing Banned list'), '');
   return  if (!&UserIsAdminOrError());
   ($status, $banList) = &ReadFile("$DataDir/banlist");
   $banList = ""  if (!$status);
@@ -4470,26 +4491,26 @@ sub DoEditBanned {
 sub DoUpdateBanned {
   my ($newList, $fname);
 
-  print &GetHeader("", "Updating Banned list", "");
+  print &GetHeader('', T('Updating Banned list'), '');
   return  if (!&UserIsAdminOrError());
   $fname = "$DataDir/banlist";
   $newList = &GetParam("banlist", "#Empty file");
   if ($newList eq "") {
-    print "<p>Empty banned list or error.";
-    print "<p>Resubmit with at least one space character to remove.";
+    print "<p>", T('Empty banned list or error.');
+    print "<p>", T('Resubmit with at least one space character to remove.');
   } elsif ($newList =~ /^\s*$/s) {
     unlink($fname);
-    print "<p>Removed banned list";
+    print "<p>", T('Removed banned list');
   } else {
     &WriteStringToFile($fname, $newList);
-    print "<p>Updated banned list";
+    print "<p>", T('Updated banned list');
   }
   print &GetCommonFooter();
 }
 
 # ==== Editing/Deleting pages and links ====
 sub DoEditLinks {
-  print &GetHeader("", "Editing Links", "");
+  print &GetHeader('', T('Editing Links'), '');
   if ($AdminDelete) {
     return  if (!&UserIsAdminOrError());
   } else {
@@ -4579,7 +4600,7 @@ sub BuildLinkIndexPage {
 sub DoUpdateLinks {
   my ($commandList, $doRC, $doText);
 
-  print &GetHeader("", T('Updating Links'), "");
+  print &GetHeader('', T('Updating Links'), '');
   if ($AdminDelete) {
     return  if (!&UserIsAdminOrError());
   } else {
@@ -4591,10 +4612,10 @@ sub DoUpdateLinks {
   $doText = &GetParam("p_changetext", "0");
   $doText = 1  if ($doText eq "on");
   if ($commandList eq "") {
-    print "<p>Empty command list or error.";
+    print "<p>", T('Empty command list or error.');
   } else {
     &UpdateLinksList($commandList, $doRC, $doText);
-    print "<p>Finished command list.";
+    print "<p>", T('Finished command list.');
   }
   print &GetCommonFooter();
 }
@@ -4614,8 +4635,10 @@ sub EditRecentChangesFile {
   ($status, $fileData) = &ReadFile($fname);
   if (!$status) {
     # Save error text if needed.
-    $errorText = "<p><strong>Could not open $RCName log file:"
-                 . "</strong> $fname<p>Error was:\n<pre>$!</pre>\n";
+    $errorText = "<p><strong>"
+                 . Ts('Could not open %s log file:', $RCName)
+                 . "</strong> $fname"
+                 . "<p>" . T('Error was:') . "\n<pre>$!</pre>\n";
     print $errorText  if ($printError);
     return;
   }
@@ -4649,7 +4672,8 @@ sub DeletePage {
   $page =~ s/\]+//;
   $status = &ValidId($page);
   if ($status ne "") {
-    print "Delete-Page: page $page is invalid, error is: $status<br>\n";
+    print Tss('Delete-Page: page %1 is invalid, error is: %2', $page, $status)
+          . "<br>\n";
     return;
   }
   $fname = &GetPageFile($page);
@@ -4785,12 +4809,14 @@ sub RenameTextLinks {
   $new =~ s/ /_/g;
   $status = &ValidId($old);
   if ($status ne "") {
-    print "Rename-Text: old page $old is invalid, error is: $status<br>\n";
+    print Tss('Rename-Text: old page %1 is invalid, error is: %2', $old, $status)
+          . "<br>\n";
     return;
   }
   $status = &ValidId($new);
   if ($status ne "") {
-    print "Rename-Text: new page $new is invalid, error is: $status<br>\n";
+    print Tss('Rename-Text: new page %1 is invalid, error is: %2', $new, $status)
+          . "<br>\n";
     return;
   }
   $old =~ s/_/ /g;
@@ -4839,22 +4865,26 @@ sub RenamePage {
   $new = &FreeToNormal($new);
   $status = &ValidId($old);
   if ($status ne "") {
-    print "Rename: old page $old is invalid, error is: $status<br>\n";
+    print Tss('Rename: old page %1 is invalid, error is: %2', $old, $status)
+          . "<br>\n";
     return;
   }
   $status = &ValidId($new);
   if ($status ne "") {
-    print "Rename: new page $new is invalid, error is: $status<br>\n";
+    print Tss('Rename: new page %1 is invalid, error is: %2', $new, $status)
+          . "<br>\n";
     return;
   }
   $newfname = &GetPageFile($new);
   if (-f $newfname) {
-    print "Rename: new page $new already exists--not renamed.<br>\n";
+    print Ts('Rename: new page %s already exists--not renamed.', $new)
+          . "<br>\n";
     return;
   }
   $oldfname = &GetPageFile($old);
   if (!(-f $oldfname)) {
-    print "Rename: old page $old does not exist--nothing done.<br>\n";
+    print Ts('Rename: old page %s does not exist--nothing done.', $old)
+          . "<br>\n";
     return;
   }
   &CreatePageDir($PageDir, $new);  # It might not exist yet
@@ -4873,8 +4903,8 @@ sub RenamePage {
 }
 
 sub DoShowVersion {
-  print &GetHeader("", "Displaying Wiki Version", "");
-  print "<p>UseModWiki version 1.0.2</p>\n";
+  print &GetHeader('', T('Displaying Wiki Version'), '');
+  print "<p>UseModWiki version 1.0.3</p>\n";
   print &GetCommonFooter();
 }
 
@@ -4916,9 +4946,9 @@ sub DoDeletePage {
   my ($id) = @_;
 
   return  if (!&ValidIdOrDie($id));
+  print &GetHeader('', Ts('Delete %s', $id), '');
   return  if (!&UserIsAdminOrError());
   if ($ConfirmDel && !&GetParam('confirm', 0)) {
-    print &GetHeader('', Ts('Confirm Delete %s', $id), '');
     print '<p>';
     print Ts('Confirm deletion of %s by following this link:', $id);
     print '<br>' . &GetDeleteLink($id, T('Confirm Delete'), 1);
@@ -4926,7 +4956,6 @@ sub DoDeletePage {
     print &GetCommonFooter();
     return;
   }
-  print &GetHeader('', Ts('Delete %s', $id), '');
   print '<p>';
   if ($id eq $HomePage)  {
     print Ts('%s can not be deleted.', $HomePage);

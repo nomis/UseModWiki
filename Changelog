@@ -1,4 +1,20 @@
 
+Changes for bugfix release 1.0.3 (September 12, 2007):
+
+* fixed bug IntermapedGifNotInlinedForLink
+* fixed bug AuthenicationFailedNoHeader
+* fixed bug BacklinksMissesSomeFreeLinks
+  fix contributed by BrianHunter
+* fix bug EmptyTableElements
+  fix contributed by StefanTrcek
+* fix bug MiscTranslation
+  fix contributed by JuanMtnezPineda
+* added more translation strings
+* DoRC: when using rcidonly text was quoted too much
+  noticed by CliffordAdams (bug was introduced with XssFix in 1.0.1)
+* fix bug UrlEncoding
+  fix contributed by StefanTrcek
+
 Changes for bugfix release 1.0.2 (August 26, 2007):
 
 * added CREDITS and Changelog (forgot them in 1.0.1)
@@ -15,10 +31,11 @@ Changes for bugfix release 1.0.2 (August 26, 2007):
 * added patch RobotsNoFollow version D
   contributed by Trent with suggestion by UngarPeter
   based on work by TomScanlan
-* fixed bug ActionLinksExistsZeroSubPage aka RequestedLinks
+* fixed bug ActionLinksExistsZeroSubPage
+    aka bug RequestedLinks
   based on fix by GyPark and MikeCastle
-* fixed bug ImageExtensionsCaseSensitive aka
-  UppercaseImageUploadCausesProblemsWithDisplay
+* fixed bug ImageExtensionsCaseSensitive
+    aka bug UppercaseImageUploadCausesProblemsWithDisplay
 * added ico/tif/tiff to ImageExtensions
 * fixed bug CamelCaseImageUploadCausesProblemsWithDisplay
   with suggestion from DavidClaughton
@@ -29,10 +46,12 @@ Changes for bugfix release 1.0.1 (July 9, 2007):
   fix contributed by Christoph Berg (cb@df7cb.de)
 * fixed bug PossibleToCreatePagesThatCanNotBeEdited
   fix contributed by RichardP
-* fixed bug FileUploadManglesFile aka Win32BinaryUpload aka
-  UploadOnWindowsNeedsBinmode
+* fixed bug FileUploadManglesFile
+    aka bug Win32BinaryUpload
+    aka bug UploadOnWindowsNeedsBinmode
   fix contributed by Robin Rowe (rower@movieeditor.com) and DavidWall
-* fixed bug CompareButtonFailsToDiff aka DoHistory's_Form
+* fixed bug CompareButtonFailsToDiff
+    aka bug DoHistory's_Form
   fix contributed by BrianHunter and ??
 * fixed bug BadHtml
 * fixed bug AmpersandBug
