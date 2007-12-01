@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# UseModWiki version 1.0.3 (September 12, 2007)
+# UseModWiki version 1.0.4 (December 1, 2007)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # Based on the GPLed AtisWiki 0.3  (C) 1998 Markus Denker
@@ -179,7 +179,7 @@ $BracketImg   = 1;      # 1 = [url url.gif] becomes image link, 0 = no img
 # Names of sites.  (The first entry is used for the number link.)
 @IsbnNames = ('bn.com', 'amazon.com', 'search');
 # Full URL of each site before the ISBN
-@IsbnPre = ('http://shop.barnesandnoble.com/bookSearch/isbnInquiry.asp?isbn=',
+@IsbnPre = ('http://search.barnesandnoble.com/booksearch/isbninquiry.asp?isbn=',
             'http://www.amazon.com/exec/obidos/ISBN=',
             'http://www.pricescan.com/books/BookDetail.asp?isbn=');
 # Rest of URL of each site after the ISBN (usually '')
@@ -394,6 +394,16 @@ sub Tss {
   return $text;
 }
 
+sub QuoteHtml {
+  my ($html) = @_;
+
+  $html =~ s/&/&amp;/g;
+  $html =~ s/</&lt;/g;
+  $html =~ s/>/&gt;/g;
+  $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
+  return $html;
+}
+
 # == Normal page-browsing and RecentChanges code =======================
 $BrowseCode = ""; # Comment next line to always compile (slower)
 #$BrowseCode = <<'#END_OF_BROWSE_CODE';
@@ -545,7 +555,7 @@ sub BrowsePage {
   }
   $MainPage = $id;
   $MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
-  $fullHtml = &GetHeader($id, &QuoteHtml($id), $oldId);
+  $fullHtml = &GetHeader($id, &QuoteHtml($id), $oldId, 1);
   if ($revision ne '') {
     if (($revision eq $Page{'revision'}) || ($goodRevision ne '')) {
       $fullHtml .= '<b>' . Ts('Showing revision %s', $revision) . "</b><br>";
@@ -739,7 +749,7 @@ sub GetRc {
   my ($showedit, $link, $all, $idOnly, $headItem, $item);
   my ($ts, $pagename, $summary, $isEdit, $host, $kind, $extraTemp);
   my ($rcchangehist, $tEdit, $tChanges, $tDiff);
-  my ($headList, $historyPrefix, $diffPrefix);
+  my ($headList, $pagePrefix, $historyPrefix, $diffPrefix);
   my %extra = ();
   my %changetime = ();
   my %pagecount = ();
@@ -765,8 +775,9 @@ sub GetRc {
   $tEdit    = T('(edit)');
   $tDiff    = T('(diff)');
   $tChanges = T('changes');
-  $diffPrefix = $QuotedFullUrl . &QuoteHtml("?action=browse\&diff=4\&id=");
-  $historyPrefix = $QuotedFullUrl . &QuoteHtml("?action=history\&id=");
+  $pagePrefix = $QuotedFullUrl . &ScriptLinkChar();
+  $diffPrefix = $pagePrefix . &QuoteHtml("action=browse&diff=4&id=");
+  $historyPrefix = $pagePrefix . &QuoteHtml("action=history&id=");
   foreach $rcline (@outrc) {
     ($ts, $pagename) = split(/$FS3/, $rcline);
     $pagecount{$pagename}++;
@@ -807,7 +818,7 @@ sub GetRc {
       ($headItem, $item) = &GetRssRcLine($pagename, $ts, $host,
                               $extra{'name'}, $extra{'id'}, $summary, $isEdit,
                               $pagecount{$pagename}, $extra{'revision'},
-                              $diffPrefix, $historyPrefix);
+                              $diffPrefix, $historyPrefix, $pagePrefix);
       $headList .= $headItem;
       $result   .= $item;
     } else {  # HTML
@@ -891,7 +902,7 @@ sub GetRcRss {
 >
     <channel rdf:about="$ChannelAbout">
         <title>${\(&QuoteHtml($SiteName))}</title>
-        <link>${\($QuotedFullUrl . &QuoteHtml("?$RCName"))}</link>
+        <link>${\($QuotedFullUrl . &ScriptLinkChar() . &QuoteHtml("$RCName"))}</link>
         <description>${\(&QuoteHtml($SiteDescription))}</description>
         <wiki:interwiki>
             <rdf:Description link="$QuotedFullUrl">
@@ -919,8 +930,8 @@ RSS
 }
 
 sub GetRssRcLine{
-  my ($pagename, $timestamp, $host, $userName, $userID, $summary,
-      $isEdit, $pagecount, $revision, $diffPrefix, $historyPrefix) = @_;
+  my ($pagename, $timestamp, $host, $userName, $userID, $summary, $isEdit,
+      $pagecount, $revision, $diffPrefix, $historyPrefix, $pagePrefix) = @_;
   my ($pagenameEsc, $itemID, $description, $authorLink, $author, $status,
       $importance, $date, $item, $headItem);
 
@@ -937,7 +948,7 @@ sub GetRssRcLine{
   $host = &QuoteHtml($host);
   if ($userName) {
     $author = &QuoteHtml($userName);
-    $authorLink = "link=\"$QuotedFullUrl?$author\"";
+    $authorLink = 'link="' . $QuotedFullUrl . &ScriptLinkChar() . $author . '"';
   } else {
     $author = $host;
   }
@@ -953,7 +964,7 @@ sub GetRssRcLine{
   $item = <<RSS ;
     <item rdf:about="$itemID">
         <title>$pagename</title>
-        <link>$QuotedFullUrl?$pagenameEsc</link>
+        <link>$pagePrefix$pagenameEsc</link>
         <description>$description</description>
         <dc:date>$date</dc:date>
         <dc:contributor>
@@ -1284,7 +1295,7 @@ sub GetHistoryLink {
 }
 
 sub GetHeader {
-  my ($id, $title, $oldId) = @_;
+  my ($id, $title, $oldId, $backlinks) = @_;
   my $header = "";
   my $logoImage = "";
   my $result = "";
@@ -1310,7 +1321,7 @@ sub GetHeader {
     }
     $header = &ScriptLink($HomePage, "<$logoImage>");
   }
-  if ($id ne '') {
+  if ($id and $backlinks) {
     $result .= $q->h1($header . &GetBackLinksSearchLink($id));
   } else {
     $result .= $q->h1($header . $title);
@@ -1502,6 +1513,39 @@ sub GetGotoBar {
   }
   $bartext .= "<br>\n";
   return $bartext;
+}
+
+# Admin bar contributed by ElMoro (with some changes)
+sub GetPageLockLink {
+  my ($id, $status, $name) = @_;
+
+  if ($FreeLinks) {
+    $id = &FreeToNormal($id);
+  }
+  return &ScriptLink("action=pagelock&set=$status&id=$id", $name);
+}
+
+sub GetAdminBar {
+  my ($id) = @_;
+  my ($result);
+
+  $result = T('Administration') . ': ';
+  if (-f &GetLockedPageFile($id))   { 
+    $result .= &GetPageLockLink($id, 0, T('Unlock page'));
+  }
+  else  {
+    $result .= &GetPageLockLink($id, 1, T('Lock page'));
+  }
+  $result .= " | " . &GetDeleteLink($id, T('Delete this page'), 0);
+  $result .= " | " . &ScriptLink("action=editbanned", T("Edit Banned List"));
+  $result .= " | " . &ScriptLink("action=maintain", T("Run Maintenance"));
+  $result .= " | " . &ScriptLink("action=editlinks", T("Edit/Rename pages")); 
+  if (-f "$DataDir/noedit") {
+    $result .= " | " . &ScriptLink("action=editlock&set=0", T("Unlock site")); 
+  } else {
+    $result .= " | " . &ScriptLink("action=editlock&set=1", T("Lock site"));
+  }
+  return $result;
 }
 
 sub GetSearchForm {
@@ -1806,16 +1850,6 @@ sub UriEscape {
   $uri =~ s/([\x00-\x1f\x7f-\xff])/sprintf("%%%02X", ord($1))/ge;
   $uri =~ s/\&/\&amp;/g;
   return $uri;
-}
-
-sub QuoteHtml {
-  my ($html) = @_;
-
-  $html =~ s/&/&amp;/g;
-  $html =~ s/</&lt;/g;
-  $html =~ s/>/&gt;/g;
-  $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
-  return $html;
 }
 
 sub ParseParagraph {
@@ -3246,7 +3280,7 @@ sub DoEdit {
   }
   $editRows = &GetParam("editrows", 20);
   $editCols = &GetParam("editcols", 65);
-  print &GetHeader('', &QuoteHtml($header), '');
+  print &GetHeader($id, &QuoteHtml($header), '');
   if ($revision ne '') {
     print "\n<b>"
           . Ts('Editing old revision %s.', $revision) . "  "
@@ -3792,7 +3826,7 @@ sub DoLinks {
   print "<hr><pre>\n\n\n\n\n";  # Extra lines to get below the logo
   &PrintLinkList(&GetFullLinkList());
   print "</pre>\n";
-  print &GetMinimumFooter();
+  print &GetCommonFooter();
 }
 
 sub PrintLinkList {
@@ -4122,6 +4156,7 @@ sub EmailNotify {
     close(EMAIL);
     my $home_url = $q->url();
     my $page_url = $home_url . &ScriptLinkChar() . &UriEscape($id);
+    my $pref_url = $home_url . &ScriptLinkChar() . "action=editprefs";
     my $editors_summary = $q->param("summary");
     if (($editors_summary eq "*") or ($editors_summary eq "")){
       $editors_summary = "";
@@ -4140,7 +4175,7 @@ sub EmailNotify {
   so only do that if you mean to.
 
   To remove yourself from this list, visit
-  ${home_url}?action=editprefs .)
+  $pref_url .)
 END_MAIL_CONTENT
     my $subject = "The $id page at $SiteName has been changed.";
     # I'm setting the "reply-to" field to be the same as the "to:" field
@@ -4904,41 +4939,8 @@ sub RenamePage {
 
 sub DoShowVersion {
   print &GetHeader('', T('Displaying Wiki Version'), '');
-  print "<p>UseModWiki version 1.0.3</p>\n";
+  print "<p>UseModWiki version 1.0.4</p>\n";
   print &GetCommonFooter();
-}
-
-# Admin bar contributed by ElMoro (with some changes)
-sub GetPageLockLink {
-  my ($id, $status, $name) = @_;
-
-  if ($FreeLinks) {
-    $id = &FreeToNormal($id);
-  }
-  return &ScriptLink("action=pagelock&set=$status&id=$id", $name);
-}
-
-sub GetAdminBar {
-  my ($id) = @_;
-  my ($result);
-
-  $result = T('Administration') . ': ';
-  if (-f &GetLockedPageFile($id))   { 
-    $result .= &GetPageLockLink($id, 0, T('Unlock page'));
-  }
-  else  {
-    $result .= &GetPageLockLink($id, 1, T('Lock page'));
-  }
-  $result .= " | " . &GetDeleteLink($id, T('Delete this page'), 0);
-  $result .= " | " . &ScriptLink("action=editbanned", T("Edit Banned List"));
-  $result .= " | " . &ScriptLink("action=maintain", T("Run Maintenance"));
-  $result .= " | " . &ScriptLink("action=editlinks", T("Edit/Rename pages")); 
-  if (-f "$DataDir/noedit") {
-    $result .= " | " . &ScriptLink("action=editlock&set=0", T("Unlock site")); 
-  } else {
-    $result .= " | " . &ScriptLink("action=editlock&set=1", T("Lock site"));
-  }
-  return $result;
 }
 
 # Thanks to Phillip Riley for original code
