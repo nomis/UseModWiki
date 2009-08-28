@@ -1,4 +1,20 @@
 
+Changes for bugfix release 1.0.5 (August 28, 2009):
+
+* added patch RssLinkInHeader (but only for normal pages)
+  contributed by UngarPeter
+* added patch DoPageLockMinorTweak
+  contributed by JuanMtnezPineda
+* Allow "0" as page name if FreeLinks are allowed
+* fixed bug NumericDatesNeedZeroPadding
+  fix contributed by GunnarH
+* fixed bug ExtraBRAtDoBackLinks
+  fix contributed by JuanMtnezPineda
+* fixed bug TTatDoEditBanned
+  fix contributed by JuanMtnezPineda
+* fixed bug NonEnglishRSS
+  fixes contributed by GunnarH
+
 Changes for bugfix release 1.0.4 (December 1, 2007):
 
 * fixed bug NoDisplayFooterInActionLink

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# UseModWiki version 1.0.4 (December 1, 2007)
+# UseModWiki version 1.0.5 (August 28, 2009)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # Based on the GPLed AtisWiki 0.3  (C) 1998 Markus Denker
@@ -165,7 +165,7 @@ $MaskHosts    = 0;      # 1 = mask hosts/IPs,      0 = no masking
 $LockCrash    = 0;      # 1 = crash if lock stuck, 0 = auto clear locks
 $HistoryEdit  = 0;      # 1 = edit links on history page, 0 = no edit links
 $OldThinLine  = 0;      # 1 = old ==== thick line, 0 = ------ for thick line
-$NumberDates  = 0;      # 1 = 2003-6-17 dates,     0 = June 17, 2003 dates
+$NumberDates  = 0;      # 1 = 2003-06-17 dates,    0 = June 17, 2003 dates
 $ParseParas   = 0;      # 1 = new paragraph markup, 0 = old markup
 $AuthorFooter = 1;      # 1 = show last author in footer, 0 = do not show
 $AllUpload    = 0;      # 1 = anyone can upload,   0 = only editor/admins
@@ -473,7 +473,7 @@ sub DoBrowseRequest {
     return 1;
   }
   $id = &GetParam('keywords', '');
-  if ($id) {                    # Just script?PageName
+  if ($id ne '') {                    # Just script?PageName
     if ($FreeLinks && (!-f &GetPageFile($id))) {
       $id = &FreeToNormal($id);
     }
@@ -893,7 +893,7 @@ sub GetRcRss {
   my $ChannelAbout = &QuoteHtml($FullUrl . &ScriptLinkChar()
                                 . $ENV{QUERY_STRING});
   $rssHeader = <<RSS ;
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="@{[$HttpCharset or 'ISO-8859-1']}"?>
 <rdf:RDF
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns="http://purl.org/rss/1.0/"
@@ -902,7 +902,7 @@ sub GetRcRss {
 >
     <channel rdf:about="$ChannelAbout">
         <title>${\(&QuoteHtml($SiteName))}</title>
-        <link>${\($QuotedFullUrl . &ScriptLinkChar() . &QuoteHtml("$RCName"))}</link>
+        <link>${\($QuotedFullUrl . &ScriptLinkChar() . &QuoteHtml(&UriEscape($RCName)))}</link>
         <description>${\(&QuoteHtml($SiteDescription))}</description>
         <wiki:interwiki>
             <rdf:Description link="$QuotedFullUrl">
@@ -935,7 +935,7 @@ sub GetRssRcLine{
   my ($pagenameEsc, $itemID, $description, $authorLink, $author, $status,
       $importance, $date, $item, $headItem);
 
-  $pagenameEsc = CGI::escape($pagename);
+  $pagenameEsc = &UriEscape($pagename);
   # Add to list of items in the <channel/>
   $itemID = $FullUrl . &ScriptLinkChar()
             . &GetOldPageParameters('browse', $pagenameEsc, $revision);
@@ -948,7 +948,7 @@ sub GetRssRcLine{
   $host = &QuoteHtml($host);
   if ($userName) {
     $author = &QuoteHtml($userName);
-    $authorLink = 'link="' . $QuotedFullUrl . &ScriptLinkChar() . $author . '"';
+    $authorLink = 'link="' . $QuotedFullUrl . &ScriptLinkChar() . &UriEscape($author) . '"';
   } else {
     $author = $host;
   }
@@ -960,6 +960,7 @@ sub GetRssRcLine{
   $date = sprintf("%4d-%02d-%02dT%02d:%02d:%02d+%02d:00",
     $year, $mon+1, $mday, $hour, $min, $sec, $TimeZoneOffset/(60*60));
   $pagename = &QuoteHtml($pagename);
+  $pagename =~ tr/_/ /;
   # Write it out longhand
   $item = <<RSS ;
     <item rdf:about="$itemID">
@@ -983,7 +984,7 @@ RSS
 }
 
 sub DoRss {
-  print "Content-type: text/xml\n\n";
+  print "Content-type: text/xml", $HttpCharset ? "; charset=$HttpCharset" : "", "\n\n";
   &DoRc(0);
 }
 
@@ -999,7 +1000,7 @@ sub DoHistory {
   my ($id) = @_;
   my ($html, $canEdit, $row, $newText);
 
-  print &GetHeader('', Ts('History of %s', $id), '') . '<br>';
+  print &GetHeader('', Ts('History of %s', $id), '');
   &OpenPage($id);
   &OpenDefaultText();
   $newText = $Text{'text'};
@@ -1306,7 +1307,7 @@ sub GetHeader {
   if ($FreeLinks) {
     $title =~ s/_/ /g;   # Display as spaces
   }
-  $result .= &GetHtmlHeader("$SiteName: $title");
+  $result .= &GetHtmlHeader("$SiteName: $title", $id);
   return $result  if ($embed);
 
   $result .= '<div class=wikiheader>';
@@ -1321,7 +1322,7 @@ sub GetHeader {
     }
     $header = &ScriptLink($HomePage, "<$logoImage>");
   }
-  if ($id and $backlinks) {
+  if (($id ne '') and $backlinks) {
     $result .= $q->h1($header . &GetBackLinksSearchLink($id));
   } else {
     $result .= $q->h1($header . $title);
@@ -1357,7 +1358,7 @@ sub GetHttpHeader {
 }
 
 sub GetHtmlHeader {
-  my ($title) = @_;
+  my ($title, $id) = @_;
   my ($dtd, $html, $bodyExtra, $stylesheet);
 
   $html = '';
@@ -1380,6 +1381,11 @@ sub GetHtmlHeader {
   }
   if ($SiteBase ne "") {
     $html .= qq(<BASE HREF="$SiteBase">\n);
+  }
+  unless ($action) {
+    $html .= qq(<link rel="alternate" title="$SiteName RSS" href=")
+          . $ScriptName . &ScriptLinkChar() . &UriEscape("action=rss&days=$RssDays")
+          . qq(" type="application/rss+xml">\n);
   }
   $stylesheet = &GetParam('stylesheet', $StyleSheet);
   $stylesheet = $StyleSheet  if ($stylesheet eq '');
@@ -1847,7 +1853,7 @@ sub EvalLocalRules {
  
 sub UriEscape {
   my ($uri) = @_;
-  $uri =~ s/([\x00-\x1f\x7f-\xff])/sprintf("%%%02X", ord($1))/ge;
+  $uri =~ s/([^\w\-.!~*'()\/\&=#])/sprintf("%%%02X", ord($1))/ge;
   $uri =~ s/\&/\&amp;/g;
   return $uri;
 }
@@ -3042,7 +3048,7 @@ sub CalcDay {
   $ts += $TimeZoneOffset;
   my ($sec, $min, $hour, $mday, $mon, $year) = localtime($ts);
   if ($NumberDates) {
-    return ($year + 1900) . '-' . ($mon+1) . '-' . $mday;
+    return sprintf("%d-%02d-%02d", $year+1900, $mon+1, $mday);
   }
   return ("January", "February", "March", "April", "May", "June",
           "July", "August", "September", "October", "November",
@@ -3059,15 +3065,15 @@ sub CalcTime {
   if (($TimeZoneOffset == 0) && ($ScriptTZ ne "")) {
     $mytz = " " . $ScriptTZ;
   }
-  $ampm = "";
-  if ($UseAmPm) {
-    $ampm = " am";
-    if ($hour > 11) {
-      $ampm = " pm";
-      $hour = $hour - 12;
-    }
-    $hour = 12   if ($hour == 0);
+  unless ($UseAmPm) {
+    return sprintf("%02d:%02d$mytz", $hour, $min);
   }
+  $ampm = " am";
+  if ($hour > 11) {
+    $ampm = " pm";
+    $hour = $hour - 12;
+  }
+  $hour = 12   if ($hour == 0);
   $min = "0" . $min   if ($min<10);
   return $hour . ":" . $min . $ampm . $mytz;
 }
@@ -3503,7 +3509,6 @@ sub DoUpdatePrefs {
   &UpdatePrefCheckbox("toplinkbar");
   &UpdatePrefCheckbox("linkrandom");
   print &GetHeader('', T('Saving Preferences'), '');
-  print '<br>';
   if ($UserID < 1001) {
     print '<b>',
           Ts('Invalid UserID %s, preferences not saved.', $UserID), '</b>';
@@ -3662,7 +3667,6 @@ sub UpdatePrefNumber {
 
 sub DoIndex {
   print &GetHeader('', T('Index of all pages'), '');
-  print '<br>';
   &PrintPageList(&AllPagesList());
   print &GetCommonFooter();
 }
@@ -3793,7 +3797,6 @@ sub DoSearch {
     return;
   }
   print &GetHeader('', &QuoteHtml(Ts('Search for: %s', $string)), '');
-  print '<br>';
   &PrintPageList(&SearchTitleAndBody($string));
   print &GetCommonFooter();
 }
@@ -3802,7 +3805,6 @@ sub DoBackLinks {
   my ($string) = @_;
 
   print &GetHeader('', &QuoteHtml(Ts('Backlinks for: %s', $string)), '');
-  print '<br>';
   # At this time the backlinks are mostly a renamed search.
   # An initial attempt to match links only failed on subpages and free links.
   # Escape some possibly problematic characters:
@@ -3823,7 +3825,7 @@ sub PrintPageList {
 
 sub DoLinks {
   print &GetHeader('', &QuoteHtml(T('Full Link List')), '');
-  print "<hr><pre>\n\n\n\n\n";  # Extra lines to get below the logo
+  print "<pre>\n\n\n\n\n";  # Extra lines to get below the logo
   &PrintLinkList(&GetFullLinkList());
   print "</pre>\n";
   print &GetCommonFooter();
@@ -4330,7 +4332,6 @@ sub ProcessVetos {
 sub DoMaintain {
   my ($name, $fname, $data, $message, $status);
   print &GetHeader('', T('Maintenance on all pages'), '');
-  print "<br>";
   $fname = "$DataDir/maintain";
   if (!&UserIsAdmin()) {
     if ((-f $fname) && ((-M $fname) < 0.5)) {
@@ -4419,9 +4420,9 @@ sub DoMaintainRc {
   return  if (!&UserIsAdminOrError());
   &RequestLock() or die(T('Could not get lock for RC maintenance'));
   if (&TrimRc()) {
-    print '<br>' . T('RC maintenance done.') . '<br>';
+    print T('RC maintenance done.') . '<br>';
   } else {
-    print '<br>' . T('RC maintenance not done.') . '<br>';
+    print T('RC maintenance not done.') . '<br>';
   }
   &ReleaseLock();
   print &GetCommonFooter();
@@ -4446,12 +4447,17 @@ sub UserIsAdminOrError {
 }
 
 sub DoEditLock {
-  my ($fname);
+  my ($set, $fname);
 
-  print &GetHeader('', T('Set or Remove global edit lock'), '');
+  $set = &GetParam("set", 1) ? 1 : 0;
+  if ($set) {
+    print &GetHeader('', T('Set global edit lock'), '');
+  } else {
+    print &GetHeader('', T('Remove global edit lock'), '');
+  }
   return  if (!&UserIsAdminOrError());
   $fname = "$DataDir/noedit";
-  if (&GetParam("set", 1)) {
+  if ($set) {
     &WriteStringToFile($fname, "editing locked.");
   } else {
     unlink($fname);
@@ -4465,9 +4471,14 @@ sub DoEditLock {
 }
 
 sub DoPageLock {
-  my ($fname, $id);
+  my ($set, $fname, $id);
 
-  print &GetHeader('', T('Set or Remove page edit lock'), '');
+  $set = &GetParam("set", 1) ? 1 : 0;
+  if ($set) {
+    print &GetHeader('', T('Set page edit lock'), '');
+  } else {
+    print &GetHeader('', T('Remove page edit lock'), '');
+  }
   # Consider allowing page lock/unlock at editor level?
   return  if (!&UserIsAdminOrError());
   $id = &GetParam("id", "");
@@ -4477,7 +4488,7 @@ sub DoPageLock {
   }
   return  if (!&ValidIdOrDie($id));       # Consider nicer error?
   $fname = &GetLockedPageFile($id);
-  if (&GetParam("set", 1)) {
+  if ($set) {
     &WriteStringToFile($fname, "editing locked.");
   } else {
     unlink($fname);
@@ -4505,12 +4516,12 @@ sub DoEditBanned {
         "a hostname).  <b>Note:</b> To test the ban on yourself, you must ",
         "give up your admin access (remove password in Preferences).";
   print "<p>Example:<br>",
-        "# blocks hosts ending with .foocorp.com<br>",
-        "\\.foocorp\\.com\$<br>",
-        "# blocks exact IP address<br>",
-        "^123\\.21\\.3\\.9\$<br>",
-        "# blocks whole 123.21.3.* IP network<br>",
-        "^123\\.21\\.3\\.\\d+\$<p>";
+        "<tt># blocks hosts ending with .foocorp.com</tt><br>",
+        "<tt>\\.foocorp\\.com\$</tt><br>",
+        "<tt># blocks exact IP address</tt><br>",
+        "<tt>^123\\.21\\.3\\.9\$</tt><br>",
+        "<tt># blocks whole 123.21.3.* IP network</tt><br>",
+        "<tt>^123\\.21\\.3\\.\\d+\$</tt><p>";
   print &GetTextArea('banlist', $banList, 12, 50);
   print "<br>", $q->submit(-name=>'Save'), "\n";
   print $q->endform;
@@ -4939,7 +4950,7 @@ sub RenamePage {
 
 sub DoShowVersion {
   print &GetHeader('', T('Displaying Wiki Version'), '');
-  print "<p>UseModWiki version 1.0.4</p>\n";
+  print "<p>UseModWiki version 1.0.5</p>\n";
   print &GetCommonFooter();
 }
 
