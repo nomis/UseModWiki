@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# UseModWiki version 1.0.5 (August 28, 2009)
+# UseModWiki version 1.0.6 (November 05, 2016)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # Based on the GPLed AtisWiki 0.3  (C) 1998 Markus Denker
@@ -1340,11 +1340,12 @@ sub GetHttpHeader {
 
   $type = 'text/html'  if ($type eq '');
   if (defined($SetCookie{'id'})) {
-    $cookie = "$CookieName="
-            . "rev&" . $SetCookie{'rev'}
-            . "&id&" . $SetCookie{'id'}
-            . "&randkey&" . $SetCookie{'randkey'};
-    $cookie .= ";expires=Fri, 08-Sep-2013 19:48:23 GMT";
+    $cookie = $q->cookie(
+                -name => $CookieName,
+                -value => { rev => $SetCookie{'rev'},
+                            id => $SetCookie{'id'},
+                            randkey => $SetCookie{'randkey'} },
+                -expires => '+3y');
     if ($HttpCharset ne '') {
       return $q->header(-cookie=>$cookie,
                         -type=>"$type; charset=$HttpCharset");
@@ -1465,7 +1466,7 @@ sub GetFooterText {
     $result .= '<br><b>' . T('Config file error:') . '</b> '
                . $ConfigError . '<br>';
   }
-  $result .= $q->endform;
+  $result .= $q->end_form;
   if ($FooterNote ne '') {
     $result .= T($FooterNote);
   }
@@ -1479,7 +1480,7 @@ sub GetCommonFooter {
 
   $html = '<div class=wikifooter>' . '<hr class=wikilinefooter>'
           . &GetFormStart() . &GetGotoBar('')
-          . &GetSearchForm() . $q->endform;
+          . &GetSearchForm() . $q->end_form;
   if ($FooterNote ne '') {
     $html .= T($FooterNote);
   }
@@ -1492,7 +1493,7 @@ sub GetMinimumFooter {
 }
 
 sub GetFormStart {
-  return $q->startform("POST", "$ScriptName",
+  return $q->start_form("POST", "$ScriptName",
                        "application/x-www-form-urlencoded");
 }
 
@@ -3369,7 +3370,7 @@ sub DoEdit {
     print "<h2>", T('Preview only, not yet saved'), "</h2>\n";
     print '</div>';
   }
-  print $q->endform;
+  print $q->end_form;
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class=wikifooter>';
     print "<hr class=wikilinefooter>\n";
@@ -3475,7 +3476,7 @@ sub DoEditPrefs {
   print '<br>' . T('StyleSheet URL:') . ' ',
         &GetFormText('stylesheet', "", 30, 150);
   print '<br>', $q->submit(-name=>'Save', -value=>T('Save')), "\n";
-  print $q->endform;
+  print $q->end_form;
   print '</div>';
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class=wikifooter>';
@@ -3699,7 +3700,7 @@ sub DoEnterLogin {
         $q->password_field(-name=>'p_password', -value=>'', 
                            -size=>15, -maxlength=>50);
   print '<br>', $q->submit(-name=>'Login', -value=>T('Login')), "\n";
-  print $q->endform;
+  print $q->end_form;
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class=wikifooter>';
     print "<hr class=wikilinefooter>\n";
@@ -4524,7 +4525,7 @@ sub DoEditBanned {
         "<tt>^123\\.21\\.3\\.\\d+\$</tt><p>";
   print &GetTextArea('banlist', $banList, 12, 50);
   print "<br>", $q->submit(-name=>'Save'), "\n";
-  print $q->endform;
+  print $q->end_form;
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class=wikifooter>';
     print "<hr class=wikilinefooter>\n";
@@ -4580,7 +4581,7 @@ sub DoEditLinks {
   print $q->checkbox(-name=>"p_changetext", -override=>1, -checked=>1,
                       -label=>"Substitute text for rename");
   print "<br>", $q->submit(-name=>'Edit'), "\n";
-  print $q->endform;
+  print $q->end_form;
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class=wikifooter>';
     print "<hr class=wikilinefooter>\n";
@@ -4941,6 +4942,11 @@ sub RenamePage {
   unlink($newkeep)  if (-f $newkeep);  # Clean up if needed.
   rename($oldkeep,  $newkeep);
   unlink($IndexFile)  if ($UseIndex);
+  my $oldlock = &GetLockedPageFile($old);
+  if (-f $oldlock) {
+    my $newlock = &GetLockedPageFile($new);
+    rename($oldlock, $newlock);
+  }
   &EditRecentChanges(2, $old, $new)  if ($doRC);
   if ($doText) {
     &BuildLinkIndexPage($new);  # Keep index up-to-date
@@ -4950,7 +4956,7 @@ sub RenamePage {
 
 sub DoShowVersion {
   print &GetHeader('', T('Displaying Wiki Version'), '');
-  print "<p>UseModWiki version 1.0.5</p>\n";
+  print "<p>UseModWiki version 1.0.6</p>\n";
   print &GetCommonFooter();
 }
 
