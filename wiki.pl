@@ -1,5 +1,5 @@
 #!/usr/bin/perl -wT
-# UseModWiki version 1.2.0 (November 05, 2017)
+# UseModWiki version 1.2.1 (December 01, 2017)
 # Copyright (C) 2000-2003 Clifford A. Adams  <caadams@usemod.com>
 # Copyright (C) 2002-2003 Sunir Shah  <sunir@sunir.org>
 # with some changes from  Markus Lude <markus.lude@gmx.de>
@@ -591,8 +591,8 @@ sub BrowsePage {
   $fullHtml .= "</div>\n";
   if (($id eq $RCName) || (T($RCName) eq $id) || (T($id) eq $RCName)) {
     print $fullHtml;
-    print qq(<hr class="wikilinerc">\n);
     print '<div class="wikirc">';
+    print qq(<hr class="wikilinerc">\n);
     &DoRc(1);
     print "</div>\n";
     print &GetFooterText($id, $goodRevision);
@@ -919,6 +919,15 @@ sub GetRcRss {
 RSS
   ($headList, $items) = &GetRc(0, @_);
   $rssHeader .= $headList;
+  if (! $RssLogoUrl) {
+    $RssLogoUrl = $FullUrl;
+    if ($LogoUrl =~ /^\//) {
+      $RssLogoUrl =~ s/^(http:\/\/[^\/]*)(\/.*)$/$1/;
+      $RssLogoUrl .= $LogoUrl;
+    } else {
+      $RssLogoUrl = $LogoUrl;
+    }
+  }
   return <<RSS ;
 $rssHeader
             </rdf:Seq>
@@ -1020,7 +1029,7 @@ sub DoHistory {
           <input type="hidden" name="action" value="browse">
           <input type="hidden" name="diff" value="1">
           <input type="hidden" name="id" value="$id">
-      <table border="0" width="100%"><tr>
+      <table border="0" width="100%">
 EOF
   }
   $html = &GetHistoryLine($id, $Page{'text_default'}, $canEdit, $row++);
@@ -1102,7 +1111,7 @@ sub GetHistoryLine {
     $summary = &QuoteHtml($summary);   # Thanks Sunir! :-)
     $html .= "<b>[$summary]</b> ";
   }
-  $html .= $UseDiff ? "</tr>\n" : "<br>\n";
+  $html .= $UseDiff ? "</td></tr>\n" : "<br>\n";
   return $html;
 }
 
@@ -1483,7 +1492,7 @@ sub GetFooterText {
     $result .= T($FooterNote);
   }
   $result .= "</div>\n";
-  $result .= &GetMinimumFooter();
+  $result .= $q->end_html;
   return $result;
 }
 
@@ -1615,6 +1624,7 @@ sub GetRedirectPage {
     }
     $html .= "\n<p>";
     $html .= Ts('Follow the %s link to continue.', $nameLink);
+    $html .= "</div>\n"; # end wikibody
     $html .= &GetMinimumFooter();
   }
   return $html;
@@ -2435,7 +2445,7 @@ sub OpenNewSection {
   $Section{'revision'} = 0;     # Number of edited times
   $Section{'tscreate'} = $Now;  # Set once at creation
   $Section{'ts'} = $Now;        # Updated every edit
-  $Section{'ip'} = $ENV{REMOTE_ADDR};
+  $Section{'ip'} = GetIP();
   $Section{'host'} = '';        # Updated only for real edits (can be slow)
   $Section{'id'} = $UserID;
   $Section{'username'} = &GetParam("username", "");
@@ -2540,7 +2550,7 @@ sub SaveSection {
 
   $Section{'revision'} += 1;   # Number of edited times
   $Section{'ts'} = $Now;       # Updated every edit
-  $Section{'ip'} = $ENV{REMOTE_ADDR};
+  $Section{'ip'} = GetIP();
   $Section{'id'} = $UserID;
   $Section{'username'} = &GetParam("username", "");
   $Section{'data'} = $data;
@@ -2820,7 +2830,7 @@ sub UserIsBanned {
   ($status, $data) = &ReadFile("$DataDir/banlist");
   return 0  if (!$status);  # No file exists, so no ban
   $data =~ s/\r//g;
-  $ip = $ENV{'REMOTE_ADDR'};
+  $ip = GetIP();
   $host = &GetRemoteHost(0);
   foreach (split(/\n/, $data)) {
     next  if ((/^\s*$/) || (/^#/));  # Skip empty, spaces, or comments
@@ -3169,7 +3179,7 @@ sub GetHiddenValue {
 }
 
 sub GetIP {
-  return $ENV{REMOTE_ADDR};
+  return $ENV{REMOTE_ADDR} || '127.0.0.1';
 }
 
 sub GetRemoteHost {
@@ -3612,6 +3622,7 @@ sub DoEditPrefs {
   print '<br>', $q->submit(-name=>'Save', -value=>T('Save')), "\n";
   print $q->end_form;
   print "</div>\n";
+  print "</div>\n"; # end wikibody
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class="wikifooter">';
     print qq(<hr class="wikilinefooter">\n);
@@ -3819,7 +3830,7 @@ sub DoNewLogin {
   # The cookie will be transmitted in the next header
   %UserData = %UserCookie;
   $UserData{'createtime'} = $Now;
-  $UserData{'createip'} = $ENV{REMOTE_ADDR};
+  $UserData{'createip'} = GetIP();
   &SaveUserData();
 }
 
@@ -3835,6 +3846,7 @@ sub DoEnterLogin {
                            -size=>15, -maxlength=>50);
   print '<br>', $q->submit(-name=>'Login', -value=>T('Login')), "\n";
   print $q->end_form;
+  print "</div>\n"; # end wikibody
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class="wikifooter">';
     print qq(<hr class="wikilinefooter">\n);
@@ -3869,6 +3881,7 @@ sub DoLogin {
   } else {
     print Ts('Login for user ID %s failed.', $unsafe_uid);
   }
+  print "</div>\n"; # end wikibody
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class="wikifooter">';
     print qq(<hr class="wikilinefooter">\n);
@@ -4112,7 +4125,7 @@ sub DoPost {
   my $oldconflict = &GetParam("oldconflict", "");
   my $isEdit = 0;
   my $editTime = $Now;
-  my $authorAddr = $ENV{REMOTE_ADDR};
+  my $authorAddr = GetIP();
 
   if ($FreeLinks) {
     $unsafe_id = &FreeToNormal($unsafe_id);
@@ -4189,6 +4202,14 @@ sub DoPost {
     &ReleaseLock();
     &DoEdit($id, 0, $pgtime, $string, 1);
     return;
+  }
+  if ($UseEditHash) {
+    my $p_hash = &GetParam("hash", "");
+    if (!&CheckHash("edit", $p_hash, $id, $pgtime)) {
+      &ReleaseLock();
+      &DoEdit($id, 0, $pgtime, $string, 1);
+      return;
+    }
   }
   $user = &GetParam("username", "");
   # If the person doing editing chooses, send out email notification
@@ -4669,6 +4690,7 @@ sub DoEditBanned {
   print &GetTextArea('banlist', $banList, 12, 50);
   print "<br>", $q->submit(-name=>'Save'), "\n";
   print $q->end_form;
+  print "</div>\n"; # end wikibody
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class="wikifooter">';
     print qq(<hr class="wikilinefooter">\n);
@@ -4725,6 +4747,7 @@ sub DoEditLinks {
                       -label=>"Substitute text for rename");
   print "<br>", $q->submit(-name=>'Edit'), "\n";
   print $q->end_form;
+  print "</div>\n"; # end wikibody
   if (!&GetParam('embed', $EmbedWiki)) {
     print '<div class="wikifooter">';
     print qq(<hr class="wikilinefooter">\n);
@@ -5097,7 +5120,7 @@ sub RenamePage {
 
 sub DoShowVersion {
   print &GetHeader('', T('Displaying Wiki Version'), '');
-  print "<p>UseModWiki version 1.2.0</p>\n";
+  print "<p>UseModWiki version 1.2.1</p>\n";
   print &GetCommonFooter();
 }
 
