@@ -801,6 +801,7 @@ sub GetRc {
         }
       }
     }
+    $host = &UserIsAdmin() ? $host : 'localhost';
     if (0 == $rcType) {  # RSS
       ($headItem, $item) = &GetRssRcLine($pagename, $ts, $host,
                               $extra{'name'}, $extra{'id'}, $summary, $isEdit,
@@ -1253,6 +1254,7 @@ sub GetAuthorLink {
   my ($host, $userName, $uid) = @_;
   my ($html, $title, $userNameShow);
 
+  $host = &UserIsAdmin() ? $host : 'localhost';
   $userNameShow = $userName;
   if ($FreeLinks) {
     $userName     =~ s/ /_/g;
