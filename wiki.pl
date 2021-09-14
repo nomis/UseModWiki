@@ -1203,7 +1203,7 @@ sub GetBackLinksSearchLink {
   my ($id) = @_;
   my $name = $id;
 
-  $id =~ s|.+/|/|;   # Subpage match: search for just /SubName
+#  $id =~ s|.+/|/|;   # Subpage match: search for just /SubName
   if ($FreeLinks) {
     $name =~ s/_/ /g;  # Display with spaces
     $id =~ s/_/+/g;    # Search for url-escaped spaces
@@ -3732,6 +3732,7 @@ sub DoBackLinks {
   # An initial attempt to match links only failed on subpages and free links.
   # Escape some possibly problematic characters:
   $string =~ s/([-'().,])/\\$1/g; 
+  $string = '\[\['.$string.'(|.*)?\]\]';
   &PrintPageList(&SearchTitleAndBody($string));
   print &GetCommonFooter();
 }
