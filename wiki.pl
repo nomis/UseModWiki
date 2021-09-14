@@ -1627,6 +1627,8 @@ sub CommonMarkup {
       # Note that these tags are restricted to a single line
       s/\&lt;b\&gt;(.*?)\&lt;\/b\&gt;/<b>$1<\/b>/gi;
       s/\&lt;i\&gt;(.*?)\&lt;\/i\&gt;/<i>$1<\/i>/gi;
+      s/\&lt;u\&gt;(.*?)\&lt;\/u\&gt;/<u>$1<\/u>/gi;
+      s/\&lt;s\&gt;(.*?)\&lt;\/s\&gt;/<s>$1<\/s>/gi;
       s/\&lt;strong\&gt;(.*?)\&lt;\/strong\&gt;/<strong>$1<\/strong>/gi;
       s/\&lt;em\&gt;(.*?)\&lt;\/em\&gt;/<em>$1<\/em>/gi;
     }
