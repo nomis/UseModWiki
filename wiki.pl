@@ -1441,7 +1441,7 @@ sub GetFooterText {
     $result .= '<br><b>' . T('Config file error:') . '</b> '
                . $ConfigError . '<br>';
   }
-  $result .= $q->endform;
+  $result .= $q->end_form;
   if ($FooterNote ne '') {
     $result .= T($FooterNote);
   }
@@ -1455,7 +1455,7 @@ sub GetCommonFooter {
 
   $html = '<hr class=wikilinefooter>' . '<div class=wikifooter>'
           . &GetFormStart() . &GetGotoBar('')
-          . &GetSearchForm() . $q->endform;
+          . &GetSearchForm() . $q->end_form;
   if ($FooterNote ne '') {
     $html .= T($FooterNote);
   }
@@ -1468,7 +1468,7 @@ sub GetMinimumFooter {
 }
 
 sub GetFormStart {
-  return $q->startform("POST", "$ScriptName",
+  return $q->start_form("POST", "$ScriptName",
                        "application/x-www-form-urlencoded");
 }
 
@@ -3308,7 +3308,7 @@ sub DoEdit {
   print '<div class=wikifooter>';
   print &GetHistoryLink($id, T('View other revisions')) . "<br>\n";
   print &GetGotoBar($id);
-  print $q->endform;
+  print $q->end_form;
   print '</div>';
   print &GetMinimumFooter();
 }
@@ -3412,7 +3412,7 @@ sub DoEditPrefs {
   print "<hr class=wikilinefooter>\n";
   print '<div class=wikifooter>';
   print &GetGotoBar('');
-  print $q->endform;
+  print $q->end_form;
   print '</div>';
   print &GetMinimumFooter();
 }
@@ -3634,7 +3634,7 @@ sub DoEnterLogin {
   print '<br>', $q->submit(-name=>'Login', -value=>T('Login')), "\n";
   print "<hr class=wikilinefooter>\n";
   print &GetGotoBar('');
-  print $q->endform;
+  print $q->end_form;
   print &GetMinimumFooter();
 }
 
@@ -3666,7 +3666,7 @@ sub DoLogin {
   }
   print "<hr class=wikilinefooter>\n";
   print &GetGotoBar('');
-  print $q->endform;
+  print $q->end_form;
   print &GetMinimumFooter();
 }
 
@@ -4427,7 +4427,7 @@ sub DoEditBanned {
   print "<br>", $q->submit(-name=>'Save'), "\n";
   print "<hr class=wikilinefooter>\n";
   print &GetGotoBar("");
-  print $q->endform;
+  print $q->end_form;
   print &GetMinimumFooter();
 }
 
@@ -4479,7 +4479,7 @@ sub DoEditLinks {
   print "<br>", $q->submit(-name=>'Edit'), "\n";
   print "<hr class=wikilinefooter>\n";
   print &GetGotoBar("");
-  print $q->endform;
+  print $q->end_form;
   print &GetMinimumFooter();
 }
 
