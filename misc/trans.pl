@@ -91,6 +91,24 @@ Database is stored in temporary directory %s
 
 Config file error:
 
+Administration
+
+Unlock page
+
+Lock page
+
+Delete this page
+
+Edit Banned List
+
+Run Maintenance
+
+Edit/Rename pages
+
+Unlock site
+
+Lock site
+
 Search:
 
 Go!
@@ -431,13 +449,17 @@ This operation is restricted to site editors only...
 
 This operation is restricted to administrators only...
 
-Set or Remove global edit lock
+Set global edit lock
+
+Remove global edit lock
 
 Edit lock created.
 
 Edit lock removed.
 
-Set or Remove page edit lock
+Set page edit lock
+
+Remove page edit lock
 
 Missing page id to lock/unlock...
 
@@ -445,35 +467,53 @@ Lock for %s created.
 
 Lock for %s removed.
 
+Editing Banned list
+
+Updating Banned list
+
+Empty banned list or error.
+
+Resubmit with at least one space character to remove.
+
+Removed banned list
+
+Updated banned list
+
+Editing Links
+
 UpdateLinksList could not get main lock
 
 Updating Links
 
-Administration
+Empty command list or error.
 
-Unlock page
+Finished command list.
 
-Lock page
+Could not open %s log file:
 
-Delete this page
+Error was:
 
-Edit Banned List
+Delete-Page: page %1 is invalid, error is: %2
 
-Run Maintenance
+Rename-Text: old page %1 is invalid, error is: %2
 
-Edit/Rename pages
+Rename-Text: new page %1 is invalid, error is: %2
 
-Unlock site
+Rename: old page %1 is invalid, error is: %2
 
-Lock site
+Rename: new page %1 is invalid, error is: %2
 
-Confirm Delete %s
+Rename: new page %s already exists--not renamed.
+
+Rename: old page %s does not exist--nothing done.
+
+Displaying Wiki Version
+
+Delete %s
 
 Confirm deletion of %s by following this link:
 
 Confirm Delete
-
-Delete %s
 
 %s can not be deleted.
 
@@ -486,6 +526,8 @@ File Upload Page
 The current upload size limit is %s.
 
 Change the %s variable to increase this limit.
+
+File to Upload:
 
 Upload Finished
 
