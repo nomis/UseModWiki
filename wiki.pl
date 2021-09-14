@@ -1483,6 +1483,7 @@ sub GetGotoBar {
     $bartext .= " | " . &GetPageLink($main);
   }
   $bartext .= " | " . &GetPageLink($RCName);
+  $bartext .= " | <a href=\"/action=login\">Login</a>";
   $bartext .= " | " . &GetPrefsLink();
   if ($UseUpload && &UserCanUpload()) {
     $bartext .= " | " . &GetUploadLink();
