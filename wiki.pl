@@ -32,6 +32,7 @@ package UseModWiki;
 use strict;
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
+use User::pwent;
 use Session::Token;
 
 # Configuration/constant variables:
@@ -69,7 +70,7 @@ use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
   $ConfigError $UploadPattern );
 
 # == Configuration =====================================================
-$DataDir     = glob("~/db"); # Main wiki directory
+$DataDir     = User::pwent::getpwuid($<)->dir."/db"; # Main wiki directory
 $UseConfig   = 1;       # 1 = use config file,    0 = do not look for config
 $ConfigFile  = "$DataDir/config";   # Configuration file
 
