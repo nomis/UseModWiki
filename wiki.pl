@@ -34,6 +34,7 @@ local $| = 1;  # Do not buffer output (localized for mod_perl)
 
 use User::pwent;
 use Session::Token;
+use String::Compare::ConstantTime;
 
 # Configuration/constant variables:
 use vars qw(@RcDays @HtmlPairs @HtmlSingle
@@ -461,7 +462,7 @@ sub InitCookie {
   if (&LoadUserData($uid)) {
     $UserID = $uid;
     if (($UserData{'id'}       != $UserCookie{'id'})      ||
-        ($UserData{'randkey'}  != $UserCookie{'randkey'})) {
+        (!String::Compare::ConstantTime::equals($UserData{'randkey'}, $UserCookie{'randkey'}))) {
       $UserID = 113;
       %UserData = ();   # Invalid.  Consider warning message.
     }
