@@ -65,7 +65,7 @@ use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
   $ConfigError $UploadPattern );
 
 # == Configuration =====================================================
-$DataDir     = "/tmp/mywikidb"; # Main wiki directory
+$DataDir     = glob("~/db"); # Main wiki directory
 $UseConfig   = 1;       # 1 = use config file,    0 = do not look for config
 $ConfigFile  = "$DataDir/config";   # Configuration file
 
