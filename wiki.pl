@@ -317,7 +317,7 @@ sub InitLinkPatterns {
                   . "prospero|telnet|gopher";
   $UrlProtocols .= '|file'  if ($NetworkFile || !$LimitFileUrl);
   $UrlPattern = "((?:(?:$UrlProtocols):[^\\]\\s\"<>$FS]+)$QDelim)";
-  $ImageExtensions = "(gif|jpg|png|bmp|jpeg)";
+  $ImageExtensions = "(gif|jpg|png|bmp|jpeg|svg|webm|GIF|JPG|PNG|BMP|JPEG|SVG|WEBM)";
   $RFCPattern = "RFC\\s?(\\d+)";
   $ISBNPattern = "ISBN:?([0-9- xX]{10,})";
   $UploadPattern = "upload:([^\\]\\s\"<>$FS]+)$QDelim";
