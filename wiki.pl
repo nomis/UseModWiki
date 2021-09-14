@@ -763,8 +763,8 @@ sub GetRc {
   $tEdit    = T('(edit)');
   $tDiff    = T('(diff)');
   $tChanges = T('changes');
-  $diffPrefix = $QuotedFullUrl . &QuoteHtml("?action=browse\&diff=4\&id=");
-  $historyPrefix = $QuotedFullUrl . &QuoteHtml("?action=history\&id=");
+  $diffPrefix = $QuotedFullUrl . &QuoteHtml("action=browse\&diff=4\&id=");
+  $historyPrefix = $QuotedFullUrl . &QuoteHtml("action=history\&id=");
   foreach $rcline (@outrc) {
     ($ts, $pagename) = split(/$FS3/, $rcline);
     $pagecount{$pagename}++;
@@ -993,7 +993,7 @@ sub DoHistory {
   $canEdit = &UserCanEdit($id)  if ($HistoryEdit);
   if ($UseDiff) {
     print <<EOF ;
-      <form action='$ScriptName' METHOD='GET'>
+      <form action='$ScriptName/wiki.cgi' METHOD='GET'>
           <input type='hidden' name='action' value='browse'/>
           <input type='hidden' name='diff' value='1'/>
           <input type='hidden' name='id' value='$id'/>
@@ -4089,7 +4089,7 @@ sub EmailNotify {
   so only do that if you mean to.
 
   To remove yourself from this list, visit
-  ${home_url}?action=editprefs .)
+  ${home_url}action=editprefs .)
 END_MAIL_CONTENT
     my $subject = "The $id page at $SiteName has been changed.";
     # I'm setting the "reply-to" field to be the same as the "to:" field
