@@ -30,6 +30,8 @@ package UseModWiki;
 use strict;
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
+use Session::Token;
+
 # Configuration/constant variables:
 use vars qw(@RcDays @HtmlPairs @HtmlSingle
   $TempDir $LockDir $DataDir $HtmlDir $UserDir $KeepDir $PageDir
@@ -3476,8 +3478,9 @@ sub DoUpdatePrefs {
     print T('Password removed.'), '<br>';
     undef $UserData{'password'};
   } elsif ($password ne "*") {
-    print T('Password changed.'), '<br>';
+    print T('Password changed. Login again.'), '<br>';
     $UserData{'password'} = $password;
+    $UserData{'randkey'} = Session::Token->new->get;
   }
   if (($AdminPass ne "") || ($EditPass ne "")) {
     $password = &GetParam("p_adminpw",  "");
@@ -3611,7 +3614,7 @@ sub DoNewLogin {
   # (maybe use "replace=1" parameter)
   &CreateUserDir();
   $SetCookie{'id'} = &GetNewUserId();
-  $SetCookie{'randkey'} = int(rand(1000000000));
+  $SetCookie{'randkey'} = Session::Token->new->get;
   $SetCookie{'rev'} = 1;
   %UserCookie = %SetCookie;
   $UserID = $SetCookie{'id'};
