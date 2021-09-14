@@ -1360,6 +1360,7 @@ sub GetHtmlHeader {
       $keywords =~ s/([a-z])([A-Z])/$1, $2/g;
       $html .= "<META NAME='KEYWORDS' CONTENT='$keywords'/>\n" if $keywords;
   }
+  $html .= "<META NAME='ROBOTS' CONTENT='NOINDEX,NOFOLLOW,NOARCHIVE'>\n";
   if ($SiteBase ne "") {
     $html .= qq(<BASE HREF="$SiteBase">\n);
   }
